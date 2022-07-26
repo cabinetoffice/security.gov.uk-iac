@@ -1,0 +1,30 @@
+{
+  "devDependencies": {
+    "chai": "^4.3.4",
+    "mocha": "^8.3.2"
+  },
+  "scripts": {
+    "test": "mocha --reporter spec 'test_*.js'"
+  },
+  "name": "router",
+  "version": "1.0.0",
+  "main": "router.js",
+  "directories": {
+    "test": "."
+  },
+  "dependencies": {
+    "jsonwebtoken": "^8.5.1",
+    "jwk-to-pem": "^2.0.5"
+  },
+  "author": "OllieJC",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/co-cddo/security.gov.uk.git"
+  },
+  "bugs": {
+    "url": "https://github.com/co-cddo/security.gov.uk/issues"
+  },
+  "homepage": "https://github.com/co-cddo/security.gov.uk",
+  "description": ""
+}
