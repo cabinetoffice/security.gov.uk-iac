@@ -2,6 +2,15 @@ const jwt = require('jsonwebtoken');
 const jwkToPem = require('jwk-to-pem');
 const fs = require('fs');
 
+// -- Environment Variables --
+// DOMAINS              = pipe separated list of allowed email domains,
+//                        wildcard allowed at the start (e.g. *.gov.uk)
+// IP_ALLOWLIST         = pipe separated list of IPs allowed without
+//                        authentication
+// CHECK_JWT            = (true | false), whether or not a JWT is checked
+// CONTENT_METADATA_URL =
+// PUBLIC_JWKS_URL      =
+
 function check_email(email) {
   if (!email || typeof(email) == "undefined" || email.indexOf("@") == -1) {
     return false;
@@ -9,17 +18,30 @@ function check_email(email) {
 
   const domain = email.toLowerCase().split("@")[1];
 
-  if ([
-    "digital.cabinet-office.gov.uk",
-  ].includes(domain)) {
-    return true;
+  let domains = [];
+
+  if ("DOMAINS" in process.env) {
+    domains = process.env.DOMAINS.toLowerCase().replaceAll(" ","").split("|");
   } else {
-    if (domain.endsWith(".gov.uk")) {
-      return true;
+    domains = [];
+  }
+
+  let res = false;
+
+  for (var i = 0; i < domains.length; i++) {
+    if (domains[i].indexOf("*") == 0) {
+      const domainEnding = domains[i].slice(1);
+      if (domain.endsWith(domainEnding)) {
+        res = true;
+        break;
+      }
+    } else if (domains[i] == domain) {
+      res = true;
+      break;
     }
   }
 
-  return false;
+  return res;
 }
 
 function check_ip(ip) {
@@ -27,11 +49,27 @@ function check_ip(ip) {
     return false;
   }
 
-  // TODO: define egress IPs, these may need to be a variable
+  // TODO: define egress IPs
 
-  if (ip.startsWith("10.0.0.")) {
-    return true;
+  let ipAllowList = [];
+
+  if ("IP_ALLOWLIST" in process.env) {
+    ipAllowList = process.env.IP_ALLOWLIST.toLowerCase().replaceAll(" ","").split("|");
+  } else {
+    ipAllowList = [];
   }
+
+  for (var i = 0; i < ipAllowList.length; i++) {
+    if (
+      ipAllowList[i]
+      && ipAllowList[i] != ""
+      && ip.startsWith(ipAllowList[i])
+    ) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 function redirect(url) {
@@ -57,7 +95,18 @@ function load_routes() {
   return content_metadata;
 }
 
-function handler(event) {
+function handler(event, CHECK_JWT) {
+    if (typeof(CHECK_JWT) == "undefined") {
+      if ("CHECK_JWT" in process.env) {
+        CHECK_JWT = (
+          process.env.CHECK_JWT.toLowerCase().startsWith("t")
+          || process.env.CHECK_JWT == "1"
+         );
+      } else {
+        CHECK_JWT = false;
+      }
+    }
+
     var request = event.request;
     var headerKeys = Object.keys(request.headers);
     var uri = request.uri.toLowerCase();
@@ -108,22 +157,14 @@ function handler(event) {
       return redirect("https://vulnerability-reporting.service.security.gov.uk/.well-known/security.txt");
     }
 
-    if (uri == "") {
-      request.uri = "/index.html";
-    } else if (uri.endsWith("/")) {
-      request.uri += "index.html";
-    } else if (uri.indexOf(".html") == -1) {
-      request.uri += ".html";
-    }
-
     let signedIn = false;
 
     if (check_ip(viewerIp)) {
       signedIn = true;
-    } else if (jwtToken != "") {
+    }
 
+    if (CHECK_JWT && jwtToken != "") {
       // TODO: validate the JWT (created within 5 minutes and signed by public key)
-
       var decodedJwt = jwt.decode(jwtToken, {complete: false});
       if (!decodedJwt) {
         return redirect("/error");
@@ -135,15 +176,28 @@ function handler(event) {
     }
 
     const cm = load_routes();
-    if (request.uri in cm) {
-      if ("private" in cm[request.uri]) {
-        if (cm[request.uri]["private"] == false) {
+
+    let normUri = request.uri.toLowerCase().split("?")[0].split("#")[0];
+
+    if (normUri == "") {
+      normUri = "/index.html";
+    } else if (normUri.endsWith("/")) {
+      normUri = normUri + "index.html";
+    } else if (normUri.indexOf(".html") == -1) {
+      normUri = normUri + ".html";
+    }
+
+    request.uri = normUri;
+
+    if (normUri in cm) {
+      if ("private" in cm[normUri]) {
+        if (cm[normUri]["private"] == false) {
           return request;
-        } else if (cm[request.uri]["private"]) {
+        } else if (cm[normUri]["private"]) {
           if (signedIn) {
             return request;
           } else {
-            return redirect("/sign-in?redirect=" + request.uri);
+            return redirect("/sign-in?redirect=" + normUri);
           }
         }
       }

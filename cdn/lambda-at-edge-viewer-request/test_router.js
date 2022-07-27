@@ -95,7 +95,7 @@ fixture_5 = {
   },
   request: {
     method: 'GET',
-    uri: '/private-example',
+    uri: '/private-example?testing=123',
     querystring: {},
     headers: {
       authorization: {
@@ -119,7 +119,7 @@ fixture_6 = {
   },
   request: {
     method: 'GET',
-    uri: '/private-example',
+    uri: '/private-example#testing-should-ignore',
     querystring: {},
     headers: {
       host: {
@@ -163,12 +163,21 @@ describe("origin_request", function() {
   });
 
   it('fixture_5 - valid JWT for private URI', function(done) {
-    var res = viewer_request(fixture_5);
+    process.env.DOMAINS = 'digital.cabinet-office.gov.uk|*.gov.uk';
+    var res = viewer_request(fixture_5, true);
     expect(res.uri).to.equal("/private-example.html");
     done();
   });
 
+  it('fixture_5 - CHECK_JWT turned off', function(done) {
+    var res = viewer_request(fixture_5, false);
+    expect(res["headers"]["location"].value).to.equal('/sign-in?redirect=/private-example.html');
+    done();
+  });
+
   it('fixture_6 - IP allowlist', function(done) {
+    process.env.IP_ALLOWLIST = '10.0.0.|10.1.0.';
+
     var res = viewer_request(fixture_6);
     expect(res.uri).to.equal("/private-example.html");
     done();
