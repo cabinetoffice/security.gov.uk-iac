@@ -17,7 +17,7 @@ resource "aws_route53_zone" "np-sec-gov-uk" {
 }
 
 data "aws_cloudfront_distribution" "nonprod-cdn" {
-  id = "..."
+  id = "E2LOQ41XTODRB2"
 }
 
 resource "aws_route53_record" "a" {
@@ -88,7 +88,7 @@ module "np-aws-r53-parked-domain" {
   email_records          = true  # default
   webserver_records      = false # default
   additional_txt_records = [
-    "google-site-verification=...",
+    "google-site-verification=3EQRZEbgFr5cq9w3guznHUPnU_S7MQyDsQ_CuVCSpEM",
     "security_policy=https://vulnerability-reporting.service.security.gov.uk/.well-known/security.txt"
   ]
 }

@@ -1,0 +1,54 @@
+{
+  "/index.html": {
+    "publish": true,
+    "private": false,
+    "restrict_to_email_domains": [],
+    "date_available_from": "",
+    "date_available_to": "",
+    "page_title": "Home",
+    "file_name": "",
+    "file_reference": false,
+    "key": "/index.html",
+    "breadcrumbs": {}
+  },
+  "/guidance/index.html": {
+    "publish": true,
+    "private": false,
+    "restrict_to_email_domains": [],
+    "date_available_from": "",
+    "date_available_to": "",
+    "page_title": "Home",
+    "file_name": "",
+    "file_reference": false,
+    "key": "/guidance/index.html",
+    "breadcrumbs": {}
+  },
+  "/example-file/file%20name%20with%20spaces.pdf": {
+    "publish": true,
+    "private": false,
+    "restrict_to_email_domains": [],
+    "date_available_from": "",
+    "date_available_to": "",
+    "page_title": "Home",
+    "file_name": "",
+    "file_reference": false,
+    "key": "/example-file/File%20Name%20With%20Spaces.pdf",
+    "breadcrumbs": {}
+  },
+  "/private-example.html": {
+    "publish": true,
+    "private": true,
+    "restrict_to_email_domains": [
+      "digital.cabinet-office.gov.uk"
+    ],
+    "date_available_from": "",
+    "date_available_to": "",
+    "page_title": "Private",
+    "file_name": "",
+    "file_reference": false,
+    "key": "/private-example.html",
+    "breadcrumbs": {
+      "private-example": "Private Example"
+    }
+  }
+}

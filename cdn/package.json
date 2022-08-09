@@ -6,25 +6,21 @@
   "scripts": {
     "test": "mocha --reporter spec 'test_*.js'"
   },
-  "name": "router",
+  "name": "index",
   "version": "1.0.0",
-  "main": "router.js",
+  "main": "index.js",
   "directories": {
     "test": "."
-  },
-  "dependencies": {
-    "jsonwebtoken": "^8.5.1",
-    "jwk-to-pem": "^2.0.5"
   },
   "author": "OllieJC",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/co-cddo/security.gov.uk.git"
+    "url": "git+https://github.com/cabinetoffice/security.gov.uk-iac.git"
   },
   "bugs": {
-    "url": "https://github.com/co-cddo/security.gov.uk/issues"
+    "url": "https://github.com/cabinetoffice/security.gov.uk-iac/issues"
   },
-  "homepage": "https://github.com/co-cddo/security.gov.uk",
+  "homepage": "https://github.com/cabinetoffice/security.gov.uk-iac",
   "description": ""
 }

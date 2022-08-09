@@ -1,0 +1,38 @@
+{
+  "devDependencies": {
+    "chai": "^4.3.4",
+    "mocha": "^8.3.2"
+  },
+  "scripts": {
+    "test": "mocha --reporter spec 'test_*.js'",
+    "run": "node router.js"
+  },
+  "name": "router",
+  "version": "1.0.0",
+  "main": "router.js",
+  "directories": {
+    "test": "."
+  },
+  "dependencies": {
+    "@vendia/serverless-express": "^4.10.1",
+    "aws-sdk": "^2.1188.0",
+    "chai-http": "^4.3.0",
+    "cookie-parser": "^1.4.6",
+    "express": "^4.18.1",
+    "ip-range-check": "^0.2.0",
+    "jsonwebtoken": "^8.5.1",
+    "jwk-to-pem": "^2.0.5",
+    "source-map-support": "^0.5.21"
+  },
+  "author": "OllieJC",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/co-cddo/security.gov.uk.git"
+  },
+  "bugs": {
+    "url": "https://github.com/co-cddo/security.gov.uk/issues"
+  },
+  "homepage": "https://github.com/co-cddo/security.gov.uk",
+  "description": ""
+}

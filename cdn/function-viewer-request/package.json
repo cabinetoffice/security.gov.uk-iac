@@ -1,0 +1,26 @@
+{
+  "devDependencies": {
+    "chai": "^4.3.4",
+    "mocha": "^8.3.2"
+  },
+  "scripts": {
+    "test": "mocha --reporter spec 'test_*.js'"
+  },
+  "name": "index",
+  "version": "1.0.0",
+  "main": "index.js",
+  "directories": {
+    "test": "."
+  },
+  "author": "OllieJC",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cabinetoffice/security.gov.uk-iac.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cabinetoffice/security.gov.uk-iac/issues"
+  },
+  "homepage": "https://github.com/cabinetoffice/security.gov.uk-iac",
+  "description": ""
+}
