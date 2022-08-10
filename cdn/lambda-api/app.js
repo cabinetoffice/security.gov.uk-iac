@@ -131,7 +131,7 @@ app.get('/api/auth/sign-in', (req, res) => {
   const signed_in = check_sign_in_from_request(req);
 
   let redirect_url = "/no-access";
-  
+
   if ("redirect" in req.query && signed_in) {
     let redirect_qs = req.query["redirect"].toLowerCase();
     if (redirect_qs.match(/^\//)) {

@@ -14,96 +14,85 @@ let auth_cookie = "";
 
 describe('/api', () => {
   describe('/api/status', () => {
-    it('it should return "ok"', (done) => {
-      chai.request(server)
-      .get('/api/status')
-      .end((err, res) => {
-        expect(res.status).to.equal(200);
-        expect(res.body.status).to.equal('OK');
-        done();
-      });
+    it('it should return "ok"', async () => {
+      let res = await chai.request(server)
+      .get('/api/status');
+
+      expect(res.status).to.equal(200);
+      expect(res.body.status).to.equal('OK');
     });
   });
 
   describe('/api/status', () => {
-    it('it should fail with a bad host', (done) => {
-      chai.request(server)
+    it('it should fail with a bad host', async () => {
+      let res = await chai.request(server)
       .get('/api/status')
-      .set('host', "host.invalid")
-      .end((err, res) => {
-        expect(res.status).to.equal(400);
-        done();
-      });
+      .set('host', "host.invalid");
+
+      expect(res.status).to.equal(400);
     });
   });
 
   describe('/api/auth', () => {
     describe('/api/auth/status', () => {
-      it('it should not be signed in', (done) => {
-        chai.request(server)
-        .get('/api/auth/status')
-        .end((err, res) => {
-          expect(res.status).to.equal(200);
-          expect(res.body.signed_in).to.equal(false);
-          done();
-        });
+      it('it should not be signed in', async () => {
+        let res = await chai.request(server)
+        .get('/api/auth/status');
+
+        expect(res.status).to.equal(200);
+        expect(res.body.signed_in).to.equal(false);
       });
     });
 
     describe('/api/auth/sign-in', () => {
-      it('from invalid IP, it should not sign-in', (done) => {
+      it('from invalid IP, it should not sign-in', async () => {
         process.env["ALLOWED_IPS"] = "";
 
-        chai.request(server)
+        let res = await chai.request(server)
         .get('/api/auth/sign-in?redirect=/private-example.html')
-        .redirects(0)
-        .end((err, res) => {
-          expect(res.status).to.equal(302);
+        .redirects(0);
 
-          const headers = Object.keys(res.headers);
-          expect(headers).to.include.members(["location", "set-cookie"]);
+        expect(res.status).to.equal(302);
 
-          const cookie_val = res.header["set-cookie"][0].split("=")[1].split(".")[0];
-          expect(cookie_val).to.equal("s%3A");
+        const headers = Object.keys(res.headers);
+        expect(headers).to.include.members(["location", "set-cookie"]);
 
-          expect(res.header.location).to.equal("/");
-          done();
-        });
+        const cookie_val = res.header["set-cookie"][0].split("=")[1].split(".")[0];
+        expect(cookie_val).to.equal("s%3A");
+
+        expect(res.header.location).to.equal("/no-access");
       });
     });
 
     describe('/api/auth/sign-in', () => {
-      it('from valid IP, it should sign-in and redirect', (done) => {
+      it('from valid IP, it should sign-in and redirect', async () => {
         process.env["ALLOWED_IPS"] = "0.0.0.0/0";
 
-        chai.request(server)
+        let res = await chai.request(server)
         .get('/api/auth/sign-in?redirect=/private-example.html')
-        .redirects(0)
-        .end((err, res) => {
-          expect(res.status).to.equal(302);
+        .redirects(0);
 
-          const headers = Object.keys(res.headers);
-          expect(headers).to.include.members(["location", "set-cookie"]);
+        expect(res.status).to.equal(302);
 
-          auth_cookie = res.header["set-cookie"][0].split(";")[0];
+        const headers = Object.keys(res.headers);
+        expect(headers).to.include.members(["location", "set-cookie"]);
 
-          expect(res.header.location).to.equal("/private-example.html");
-          done();
-        });
+        auth_cookie = res.header["set-cookie"][0].split(";")[0];
+
+        expect(res.header.location).to.equal("/private-example.html");
       });
     });
 
 
     describe('/api/auth/status', () => {
-      it('it should be signed in with valid cookie (from previous request)', (done) => {
-        chai.request(server)
+      it('it should be signed in with valid cookie (from previous request)', async () => {
+
+        let res = await chai.request(server)
         .get('/api/auth/status')
-        .set('cookie', auth_cookie)
-        .end((err, res) => {
-          expect(res.status).to.equal(200);
-          expect(res.body.signed_in).to.equal(true);
-          done();
-        });
+        .set('cookie', auth_cookie);
+
+        expect(res.status).to.equal(200);
+        expect(res.body.signed_in).to.equal(true);
       });
     });
   });

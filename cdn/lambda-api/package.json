@@ -4,12 +4,12 @@
     "mocha": "^8.3.2"
   },
   "scripts": {
-    "test": "mocha --reporter spec 'test_*.js'",
-    "run": "node router.js"
+    "test": "mocha --reporter spec 'test_*.js' --exit",
+    "run": "node app.js"
   },
-  "name": "router",
+  "name": "app",
   "version": "1.0.0",
-  "main": "router.js",
+  "main": "app.js",
   "directories": {
     "test": "."
   },
