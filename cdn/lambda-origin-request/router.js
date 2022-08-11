@@ -15,15 +15,6 @@ function check_sign_in_from_cookies(cookies, host) {
       headers: { 'Cookie': cookies }
     };
 
-    /*const http = require('http');
-    const options = {
-      hostname: 'localhost',
-      port: 8002,
-      path: '/api/auth/status',
-      method: 'GET',
-      headers: { 'Cookie': cookies }
-    };*/
-
     const req = https.request(options, res => {
       res.on('data', d => {
         resolve(JSON.parse(d.toString()).signed_in);

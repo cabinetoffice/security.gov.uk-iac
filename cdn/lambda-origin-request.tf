@@ -1,16 +1,4 @@
-resource "null_resource" "build_or_lambda" {
-  triggers = {
-    router_js_hash = sha256(file("lambda-origin-request/router.js"))
-    content_md_hash = sha256(file("../../security.gov.uk-content/build/content_metadata.json"))
-  }
-  provisioner "local-exec" {
-    command = "cd lambda-origin-request && build-lambda-origin-request.sh"
-  }
-}
-
 data "archive_file" "origin_request_lambda_zip" {
-  depends_on = [null_resource.build_or_lambda]
-
   type = "zip"
 
   source_dir  = "lambda-origin-request-build"

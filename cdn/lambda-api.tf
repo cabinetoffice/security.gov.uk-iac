@@ -1,17 +1,4 @@
-resource "null_resource" "build_api_lambda" {
-  triggers = {
-    app_js_hash = sha256(file("lambda-api/app.js"))
-    lambda_js_hash = sha256(file("lambda-api/lambda.js"))
-    package_json_hash = sha256(file("lambda-api/package.json"))
-  }
-  provisioner "local-exec" {
-    command = "cd lambda-api && build-lambda-api.sh"
-  }
-}
-
 data "archive_file" "api_lambda_zip" {
-  depends_on = [null_resource.build_api_lambda]
-
   type = "zip"
 
   source_dir  = "lambda-api-build"
