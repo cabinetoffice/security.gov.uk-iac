@@ -32,12 +32,30 @@ app.use(cookieParser(app.SESSION_SECRET));
 
 app.use((req, res, next) => {
   res.on('finish', async () => {
-    const { event, context } = getCurrentInvoke();
-    console.log(JSON.stringify({
-      "event": event,
-      "context": context,
-      "result": res,
-    }));
+    log_item = {
+      "time": new Date()
+    }
+    try {
+      const { event, context } = getCurrentInvoke();
+      log_item["event"] = IS_LAMBDA ? event : {
+        "hostname": req.hostname,
+        "url": req.url,
+        "ip": req.ip,
+      };
+      log_item["context"] = IS_LAMBDA ? context : {"local": true};
+      log_item["result"] = {
+        "headers": res.getHeaders(),
+        "statusCode": typeof(res.statusCode) != "undefined" ? res.statusCode : 0,
+        "statusMessage": typeof(res.statusMessage) != "undefined" ? res.statusMessage : "UNKNOWN",
+      };
+      if (typeof(log_item.result.headers["set-cookie"]) == "string") {
+        log_item.result.headers["set-cookie"] =
+          log_item.result.headers["set-cookie"].replace(/Session=.+$/, "Session=REDACTED");
+      }
+    } catch (e) {
+      log_item["error"] = e;
+    }
+    console.log(JSON.stringify(log_item));
   });
   next();
 });
@@ -122,13 +140,16 @@ app.get('/api/auth/status', (req, res) => {
     console.log("/api/auth/status:error:", e);
   }
 
+  result["time"] = new Date();
+
   res.status(200);
   res.setHeader('Content-Type', 'application/json');
   res.send(JSON.stringify(result));
 });
 
 app.get('/api/auth/sign-in', (req, res) => {
-  const signed_in = check_sign_in_from_request(req);
+  const sign_in_state = check_sign_in_from_request(req);
+  const signed_in = sign_in_state.res;
 
   let redirect_url = "/no-access";
 
@@ -148,6 +169,7 @@ app.get('/api/auth/sign-in', (req, res) => {
     const expiresAt = new Date(+now + (6 * 60 * 60 * 1000));
     const session = {
       "signed_in": signed_in,
+      "type": sign_in_state.type,
       "email": null,
       "expiresAt": expiresAt
     };
@@ -199,7 +221,11 @@ function strToList(s) {
 }
 
 function check_sign_in_from_request(req) {
-  return check_ip(req.ip);
+  // TODO: do checks if returned from SSO
+  return {
+    res: check_ip(req.ip),
+    type:"ip"
+  };
 }
 
 function check_email(email) {

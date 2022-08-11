@@ -42,7 +42,10 @@ resource "aws_cloudfront_origin_request_policy" "custom_lae_s3_origin" {
     }
   }
   query_strings_config {
-    query_string_behavior = "none"
+    query_string_behavior = "whitelist"
+    query_strings {
+      items = ["t"]
+    }
   }
 }
 
