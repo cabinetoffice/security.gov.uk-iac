@@ -142,8 +142,9 @@ app.get('/api/auth/sign-in', (req, res) => {
     }
   }
 
-  const now = new Date();
+
   if (signed_in) {
+    const now = new Date();
     const expiresAt = new Date(+now + (6 * 60 * 60 * 1000));
     const session = {
       "signed_in": signed_in,
@@ -159,15 +160,16 @@ app.get('/api/auth/sign-in', (req, res) => {
       secure: IS_LAMBDA,
     });
   } else {
-    res.cookie(COOKIE_NAME, "", {
-      expires: now,
-      httpOnly: false,
-      path: "/",
-      signed: true,
-      sameSite: "lax",
-      secure: IS_LAMBDA,
-    });
+    signOut(res);
   }
+
+  res.redirect(redirect_url);
+});
+
+app.get('/api/auth/sign-out', (req, res) => {
+  let redirect_url = "/";
+
+  signOut(res);
 
   res.redirect(redirect_url);
 });
@@ -178,6 +180,18 @@ app.get('*', (req, res) => {
 });
 
 // ==== functions ====
+
+function signOut(res) {
+  const now = new Date();
+  res.cookie(COOKIE_NAME, "", {
+    expires: now,
+    httpOnly: false,
+    path: "/",
+    signed: true,
+    sameSite: "lax",
+    secure: IS_LAMBDA,
+  });
+}
 
 function strToList(s) {
   if (typeof(s) != "string" || s.trim() == "") { return []; }

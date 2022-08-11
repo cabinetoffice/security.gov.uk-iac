@@ -95,5 +95,24 @@ describe('/api', () => {
         expect(res.body.signed_in).to.equal(true);
       });
     });
+
+
+    describe('/api/auth/sign-out', () => {
+      it('it should sign-out and redirect home', async () => {
+        let res = await chai.request(server)
+        .get('/api/auth/sign-out')
+        .redirects(0);
+
+        expect(res.status).to.equal(302);
+
+        const headers = Object.keys(res.headers);
+        expect(headers).to.include.members(["location", "set-cookie"]);
+
+        const cookie_val = res.header["set-cookie"][0].split("=")[1].split(".")[0];
+        expect(cookie_val).to.equal("s%3A");
+
+        expect(res.header.location).to.equal("/");
+      });
+    });
   });
 });
