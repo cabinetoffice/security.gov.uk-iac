@@ -1,3 +1,8 @@
+variable "IS_CI" {
+  type    = bool
+  default = false
+}
+
 locals {
   s3_origin_id               = "${terraform.workspace}-s3"
   primary_domain             = "${terraform.workspace == "prod" ? "security.gov.uk" : "nonprod.security.gov.uk"}"
