@@ -5,7 +5,7 @@ resource "null_resource" "build_api_lambda" {
     package_json_hash = sha256(file("lambda-api/package.json"))
   }
   provisioner "local-exec" {
-    command = "pwd && ls -lah && cd lambda-api && build-lambda-api.sh"
+    command = "lambda-api/build-lambda-api.sh"
   }
 }
 
