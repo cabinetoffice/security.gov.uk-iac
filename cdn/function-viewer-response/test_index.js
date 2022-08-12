@@ -1,5 +1,5 @@
 const expect         = require("chai").expect;
-const viewer_response = require("./index.js");
+const viewer_response = require("./index.min.js");
 
 fixture_1 = {
   "version": "1.0",

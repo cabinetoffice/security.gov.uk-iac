@@ -32,6 +32,9 @@ resource "aws_lambda_function" "origin_request_lambda" {
 
   publish = true
 
+  memory_size = 256
+  timeout     = 10
+
   lifecycle {
     ignore_changes = [
       last_modified,

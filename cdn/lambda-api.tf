@@ -30,7 +30,7 @@ resource "aws_lambda_function" "api_lambda" {
   runtime          = "nodejs16.x"
 
   memory_size = 256
-  timeout     = 10
+  timeout     = 15
   publish     = true
 
   environment {

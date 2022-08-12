@@ -4,3 +4,4 @@
 **/*.zip
 **/*-lock.json
 **/*-build/
+**/*.min.js
