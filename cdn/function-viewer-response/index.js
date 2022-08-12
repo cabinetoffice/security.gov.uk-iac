@@ -2,7 +2,7 @@
 var DELETE_SRV_HEADER = "true";
 var HEADER_STS        = "max-age=31536000; includeSubdomains; preload";
 var HEADER_EXPECTCT   = "max-age=0";
-var HEADER_CSP        = "default-src 'self'";
+var HEADER_CSP        = "default-src 'self'; frame-src 'self' https://www.youtube-nocookie.com/ https://player.vimeo.com/;";
 var HEADER_CSPRO      = "NULL";
 var HEADER_XCTO       = "nosniff";
 var HEADER_XFO        = "DENY";
