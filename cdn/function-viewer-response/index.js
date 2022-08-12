@@ -45,7 +45,6 @@ function handler(event) {
     }
 
     var perms = [
-      ["cross-origin-isolated", '"www.youtube-nocookie.com" "player.vimeo.com"'],
       ["geolocation", null],
       ["microphone", null],
       ["camera", null],
@@ -73,7 +72,7 @@ function handler(event) {
     }
 
     if (!currentHeaderKeys.includes('cross-origin-embedder-policy')) {
-      headers['cross-origin-embedder-policy'] = { value: "credentialless" };
+      headers['cross-origin-embedder-policy'] = { value: "unsafe-none" };
     }
 
     if (!currentHeaderKeys.includes('cross-origin-opener-policy')) {
@@ -81,7 +80,7 @@ function handler(event) {
     }
 
     if (!currentHeaderKeys.includes('cross-origin-resource-policy')) {
-      headers['cross-origin-resource-policy'] = { value: "cross-origin" };
+      headers['cross-origin-resource-policy'] = { value: "same-origin" };
     }
 
     //Return modified response
