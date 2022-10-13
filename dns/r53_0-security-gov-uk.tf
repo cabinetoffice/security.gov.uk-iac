@@ -23,7 +23,7 @@ resource "aws_route53_record" "a-prod" {
 
   alias {
     name                   = "d2loim61rklw4t.cloudfront.net."
-    zone_id                = aws_route53_zone.sec-gov-uk.zone_id
+    zone_id                = "Z2FDTNDATAQYW2"
     evaluate_target_health = false
   }
 }
