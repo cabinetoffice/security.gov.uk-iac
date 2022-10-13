@@ -16,6 +16,51 @@ resource "aws_route53_zone" "sec-gov-uk" {
   )
 }
 
+resource "aws_route53_record" "a-prod" {
+  zone_id = aws_route53_zone.sec-gov-uk.zone_id
+  name    = ""
+  type    = "A"
+
+  alias {
+    name                   = "d2loim61rklw4t.cloudfront.net."
+    zone_id                = aws_route53_zone.sec-gov-uk.zone_id
+    evaluate_target_health = false
+  }
+}
+
+resource "aws_route53_record" "www-cname-prod" {
+  zone_id = aws_route53_zone.sec-gov-uk.zone_id
+  name    = "www"
+  type    = "CNAME"
+  ttl     = 3600
+
+  records = [
+    "d1hn3ymz0l9zrk.cloudfront.net"
+  ]
+}
+
+resource "aws_route53_record" "root-acm-cert" {
+  zone_id = aws_route53_zone.sec-gov-uk.zone_id
+  name    = "_20b0a1cfae94ddd400d956a5289fb7d4"
+  type    = "CNAME"
+  ttl     = 300
+
+  records = [
+    "_d4071d469c94f773b7aa93f9bfdaa852.tjxrvlrcqj.acm-validations.aws."
+  ]
+}
+
+resource "aws_route53_record" "www-acm-cert" {
+  zone_id = aws_route53_zone.sec-gov-uk.zone_id
+  name    = "_ecb1bd558ba274319d8d129b737d36e2.www"
+  type    = "CNAME"
+  ttl     = 86400
+
+  records = [
+    "_b73153c9f2ed143e9e7d8efb7f4a263a.lkwmzfhcjn.acm-validations.aws."
+  ]
+}
+
 #data "aws_cloudfront_distribution" "cdn-prod" {
 #  id = "..."
 #}
