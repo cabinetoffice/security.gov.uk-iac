@@ -20,11 +20,11 @@ jobs:
 
       - name: Read .terraform-version file
         id: terraformversion
-        run: echo "::set-output name=version::$(cat security.gov.uk-iac/.terraform-version)"
+        run: echo "tf_version=$(cat security.gov.uk-iac/.terraform-version)" >> $GITHUB_ENV
 
-      - uses: hashicorp/setup-terraform@v1
+      - uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: ${{ steps.terraformversion.outputs.version }}
+          terraform_version: ${{ env.tf_version }}
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
