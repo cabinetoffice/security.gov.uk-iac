@@ -1,4 +1,3 @@
-
 resource "aws_route53_record" "vuln-report-delegated-zone" {
   zone_id         = aws_route53_zone.sec-gov-uk.zone_id
   allow_overwrite = true
@@ -26,5 +25,20 @@ resource "aws_route53_record" "vuln-scan-delegated-zone" {
     "ns-1738.awsdns-25.co.uk.",
     "ns-862.awsdns-43.net.",
     "ns-434.awsdns-54.com.",
+  ]
+}
+
+resource "aws_route53_record" "sso-delegated-zone" {
+  zone_id         = aws_route53_zone.sec-gov-uk.zone_id
+  allow_overwrite = true
+  name            = "sso.service"
+  ttl             = 3600
+  type            = "NS"
+
+  records = [
+    "ns-1503.awsdns-59.org.",
+    "ns-380.awsdns-47.com.",
+    "ns-1778.awsdns-30.co.uk.",
+    "ns-958.awsdns-55.net.",
   ]
 }
