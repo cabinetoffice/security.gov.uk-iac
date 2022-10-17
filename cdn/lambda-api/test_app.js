@@ -131,6 +131,21 @@ describe('/api', () => {
       });
     });
 
+    describe('/api/auth/oidc_callback', () => {
+      it('oidc_callback should error', async () => {
+        process.env["ALLOWED_IPS"] = "";
+        if ("OIDC_CONFIGURATION_URL" in process.env) {
+
+          let res = await chai.request(server)
+          .get('/api/auth/oidc_callback')
+          .redirects(0);
+
+          expect(res.header.location).to.equal("/error?e=state-missing");
+          expect(res.status).not.to.equal(200);
+        }
+      });
+    });
+
 
     describe('/api/auth/sign-out', () => {
       it('it should sign-out and redirect home', async () => {

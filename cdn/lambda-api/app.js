@@ -38,6 +38,10 @@ if (!IS_LAMBDA) {
   app.SESSION_SECRET = process.env["SESSION_SECRET"];
 }
 
+const asyncHandler = (f) => (req, res, next) => {
+  Promise.resolve(f(req, res, next)).catch(next);
+}
+
 app.use(express.json());
 app.use(cookieParser(app.SESSION_SECRET));
 
@@ -169,7 +173,7 @@ app.get('/api/auth/status', (req, res) => {
   res.send(JSON.stringify(ss));
 });
 
-app.get('/api/auth/oidc_callback', async (req, res) => {
+app.get('/api/auth/oidc_callback', asyncHandler(async (req, res) => {
   const ss = sessionStatus(req);
 
   let saved_state = null;
@@ -203,11 +207,13 @@ app.get('/api/auth/oidc_callback', async (req, res) => {
     if (token) {
       if ("error" in token && token.error) {
         res.redirect("/error?e=getusertoken-failed");
+        return;
       } else if ("id_token" in token) {
-        await jwt.verify(token.id_token, getKey, function(err, decoded) {
+        await jwt.verify(token.id_token, getKey, await function(err, decoded) {
           if (err && typeof(decoded) == "undefined") {
             console.log("/api/auth/oidc_callback:jwt-invalid:err:", err);
             res.redirect("/error?e=jwt-invalid");
+            return;
           } else if (
             "email" in decoded &&
             "email_verified" in decoded &&
@@ -224,23 +230,27 @@ app.get('/api/auth/oidc_callback', async (req, res) => {
               }
             }
             res.redirect(redirect);
+            return;
 
           } else {
             res.redirect("/error?e=jwt-email-not-found");
+            return;
           }
         });
       } else {
         res.redirect("/error?e=jwt-id_token-missing");
+        return;
       }
     }
   } else {
     res.redirect("/error?e=callback-missing-params");
+    return;
   }
 
   res.redirect("/error");
-});
+}));
 
-app.get('/api/auth/sign-in', async (req, res) => {
+app.get('/api/auth/sign-in', asyncHandler(async (req, res) => {
   let redirect_url = "/no-access";
   let signed_in = false;
 
@@ -289,7 +299,7 @@ app.get('/api/auth/sign-in', async (req, res) => {
   }
 
   res.redirect(redirect_url);
-});
+}));
 
 app.get('/api/auth/sign-out', (req, res) => {
   let redirect_url = "/";
@@ -326,7 +336,7 @@ function getAllRoutes() {
 
     for (const rkey in all_routes) {
       const route = all_routes[rkey];
-      res[rkey] = {
+      _allRoutes[rkey] = {
         "route": rkey,
         "private": route.private,
         "title": "page_title" in route ? route.page_title : "",

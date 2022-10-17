@@ -184,6 +184,10 @@ async function handler(event) {
       return request;
     }
 
+    if (norm_uri.match(/^\/profile/)) {
+      return redirect("https://dgmhhlf9nkfe8.cloudfront.net/profile");
+    }
+
     if (norm_uri.match(/^\/.well[-_]known/)) {
       if (norm_uri.match(/^\/.well[-_]known\/teapot$/)) {
         return {
