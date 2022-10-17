@@ -1,11 +1,24 @@
 const express = require('express')
 const ipRangeCheck = require("ip-range-check");
 const cookieParser = require('cookie-parser')
+const https = require('https');
+const querystring = require('querystring');
+const uuid = require("uuid");
+const jwt = require('jsonwebtoken');
+const jwksClient = require('jwks-rsa');
 const { getCurrentInvoke } = require('@vendia/serverless-express')
 
 const FUNCTION_NAME = process.env['AWS_LAMBDA_FUNCTION_NAME'];
 const IS_LAMBDA = (typeof(FUNCTION_NAME) == "string");
 const LOCAL_PORT = 8002;
+
+const URL_HOST = process.env['URL_HOST'];
+const OIDC_CLIENT_ID = process.env['OIDC_CLIENT_ID'];
+const OIDC_CLIENT_SECRET = process.env['OIDC_CLIENT_SECRET'];
+const OIDC_CONFIGURATION_URL = process.env['OIDC_CONFIGURATION_URL'];
+
+global.oidc_configuration = {};
+global.jwks_client = {};
 
 const AWS = require('aws-sdk');
 AWS.config.update({ region: 'eu-west-2' });
@@ -60,7 +73,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use((req, res, next) => {
+app.use(async (req, res, next) => {
   // normalise headers
   let norm_headers = {};
   for (header in req.headers) {
@@ -97,6 +110,10 @@ app.use((req, res, next) => {
   }
   req.hostname = host.split(":")[0];
 
+  if (req.path.indexOf('/api/auth') == 0) {
+    getOpenIDConfig();
+  }
+
   let allowed_hosts = [
     "nonprod.security.gov.uk",
     "security.gov.uk"
@@ -127,35 +144,108 @@ app.get('/api/teapot', (req, res) => {
 });
 
 app.get('/api/auth/status', (req, res) => {
-  let result = { "signed_in": false };
-
-  try {
-    if (COOKIE_NAME in req.signedCookies && req.signedCookies[COOKIE_NAME]) {
-      // if the expiresAt date is greater than the date now, then use the sign_in value
-      if (Date.parse(req.signedCookies[COOKIE_NAME].expiresAt) > (new Date())) {
-        result = req.signedCookies[COOKIE_NAME];
-      }
-    }
-  } catch (e) {
-    console.log("/api/auth/status:error:", e);
+  let ss = sessionStatus(req);
+  if ("state" in ss) {
+    delete ss.state;
   }
-
-  result["time"] = new Date();
 
   res.status(200);
   res.setHeader('Content-Type', 'application/json');
-  res.send(JSON.stringify(result));
+  res.send(JSON.stringify(ss));
 });
 
-app.get('/api/auth/sign-in', (req, res) => {
-  const sign_in_state = check_sign_in_from_request(req);
-  const signed_in = sign_in_state.res;
+app.get('/api/auth/oidc_callback', async (req, res) => {
+  const ss = sessionStatus(req);
 
+  let saved_state = null;
+  if ("state" in ss && ss["state"].length > 0)  {
+    saved_state = ss["state"];
+  }
+
+  if (saved_state == null) {
+    res.redirect("/error?e=state-missing");
+    return;
+  }
+
+  let code = null;
+  let state = null;
+
+  if ("code" in req.query) {
+    code = req.query["code"];
+  }
+
+  if ("state" in req.query) {
+    state = req.query["state"];
+  }
+
+  if (code != null && state != null) {
+    if (state != saved_state) {
+      res.redirect("/error?e=state-not-matched");
+      return;
+    }
+
+    const token = await getUserToken(code);
+    if (token) {
+      if ("error" in token && token.error) {
+        res.redirect("/error?e=getusertoken-failed");
+      } else if ("id_token" in token) {
+        await jwt.verify(token.id_token, getKey, function(err, decoded) {
+          if (err && typeof(decoded) == "undefined") {
+            console.log("/api/auth/oidc_callback:jwt-invalid:err:", err);
+            res.redirect("/error?e=jwt-invalid");
+          } else if (
+            "email" in decoded &&
+            "email_verified" in decoded &&
+            decoded.email_verified
+          ) {
+            const dn = "display_name" in decoded ? decoded.display_name : null;
+            createSession(res, decoded.email, "sso", true, null, dn);
+
+            let redirect = "/";
+            if ("redirect" in req.query) {
+              const redirect_qs = req.query["redirect"];
+              if (redirect_qs.match(/^\/[^\/\.]/)) {
+                redirect = redirect_qs;
+              }
+            }
+            res.redirect(redirect);
+
+          } else {
+            res.redirect("/error?e=jwt-email-not-found");
+          }
+        });
+      } else {
+        res.redirect("/error?e=jwt-id_token-missing");
+      }
+    }
+  } else {
+    res.redirect("/error?e=callback-missing-params");
+  }
+
+  res.redirect("/error");
+});
+
+app.get('/api/auth/sign-in', async (req, res) => {
   let redirect_url = "/no-access";
+  let signed_in = false;
 
-  if ("redirect" in req.query && signed_in) {
+  const ss = sessionStatus(req);
+  signed_in = ss["signed_in"];
+
+  let email = signed_in ? ss["email"] : null;
+  let sign_in_type = signed_in ? ss["type"] : null;
+
+  if (!signed_in) {
+    const ip_allowed = isAllowedIp(req.ip);
+    if (ip_allowed) {
+      sign_in_type = "ip";
+      signed_in = true;
+    }
+  }
+
+  if ("redirect" in req.query) {
     let redirect_qs = req.query["redirect"].toLowerCase();
-    if (redirect_qs.match(/^\//)) {
+    if (redirect_qs.match(/^\/[^\/\.]/)) {
       if (redirect_qs.indexOf(" ") > -1) {
         redirect_qs = encodeURI(redirect_qs);
       }
@@ -163,26 +253,24 @@ app.get('/api/auth/sign-in', (req, res) => {
     }
   }
 
-
   if (signed_in) {
-    const now = new Date();
-    const expiresAt = new Date(+now + (6 * 60 * 60 * 1000));
-    const session = {
-      "signed_in": signed_in,
-      "type": sign_in_state.type,
-      "email": null,
-      "expiresAt": expiresAt
-    };
-    res.cookie(COOKIE_NAME, session, {
-      expires: expiresAt,
-      httpOnly: false,
-      path: "/",
-      signed: true,
-      sameSite: "lax",
-      secure: IS_LAMBDA,
-    });
+    createSession(res, email, sign_in_type, true);
   } else {
-    signOut(res);
+    const oidc_config = await getOpenIDConfig();
+    const auth_url = oidc_config.authorization_endpoint;
+
+    const state = uuid.v4();
+    createSession(res, email, null, false, state);
+
+    let new_redirect = auth_url + "?response_type=token";
+    new_redirect += "&client_id=" + OIDC_CLIENT_ID;
+    new_redirect += "&redirect_uri=" +
+      encodeURIComponent(URL_HOST + "/api/auth/oidc_callback?redirect=")
+      + redirect_url;
+    new_redirect += "&scope=openid%20email%20profile";
+    new_redirect += "&state=" + state;
+
+    redirect_url = new_redirect;
   }
 
   res.redirect(redirect_url);
@@ -203,6 +291,46 @@ app.get('*', (req, res) => {
 
 // ==== functions ====
 
+function sessionStatus(req) {
+  let result = { "signed_in": false };
+
+  try {
+    if (COOKIE_NAME in req.signedCookies && req.signedCookies[COOKIE_NAME]) {
+      // if the expiresAt date is greater than the date now, then use the sign_in value
+      if (Date.parse(req.signedCookies[COOKIE_NAME].expiresAt) > (new Date())) {
+        result = req.signedCookies[COOKIE_NAME];
+      }
+    }
+  } catch (e) {
+    console.log("session_signed_in:error:", e);
+  }
+
+  result["time"] = new Date();
+  return result;
+}
+
+function createSession(res, email, type, signed_in, state=null, display_name=null) {
+  const now = new Date();
+  const expiresAt = new Date(+now + (6 * 60 * 60 * 1000));
+  const session = {
+    "signed_in": signed_in,
+    "type": type,
+    "email": email,
+    "display_name": display_name,
+    "state": state,
+    "expiresAt": expiresAt
+  };
+
+  res.cookie(COOKIE_NAME, session, {
+    expires: expiresAt,
+    httpOnly: false,
+    path: "/",
+    signed: true,
+    sameSite: "lax",
+    secure: IS_LAMBDA,
+  });
+}
+
 function signOut(res) {
   const now = new Date();
   res.cookie(COOKIE_NAME, "", {
@@ -218,14 +346,6 @@ function signOut(res) {
 function strToList(s) {
   if (typeof(s) != "string" || s.trim() == "") { return []; }
   return s.toLowerCase().replaceAll(" ","").split(",");
-}
-
-function check_sign_in_from_request(req) {
-  // TODO: do checks if returned from SSO
-  return {
-    res: check_ip(req.ip),
-    type:"ip"
-  };
 }
 
 function check_email(email) {
@@ -253,7 +373,107 @@ function check_email(email) {
   return res;
 }
 
-function check_ip(ip) {
+async function getOpenIDConfig() {
+  if (Object.keys(oidc_configuration).length === 0) {
+    oidc_configuration = await _getOpenIDConfig();
+  }
+  return oidc_configuration;
+}
+
+function _getOpenIDConfig() {
+  return new Promise(function(resolve, reject) {
+    const url = new URL(OIDC_CONFIGURATION_URL);
+
+    const options = {
+      hostname: url.host,
+      port: 443,
+      path: url.pathname,
+      method: 'GET',
+      headers: { }
+    };
+
+    const req = https.request(options, res => {
+      res.on('data', d => {
+        resolve(JSON.parse(d.toString()));
+      });
+    });
+
+    req.on('error', error => {
+      reject(error);
+    });
+
+    req.end();
+  });
+}
+
+async function getKey(header, callback) {
+  const kid = header.kid;
+
+  if (Object.keys(jwks_client).length === 0) {
+    const oidc_config = await getOpenIDConfig();
+    const jwks_url = oidc_config.jwks_uri;
+
+    jwks_client = jwksClient({
+      jwksUri: jwks_url,
+      requestHeaders: {}, // Optional
+      timeout: 5000 // 5 seconds
+    });
+  }
+
+  try {
+    const key = await jwks_client.getSigningKey(kid);
+    const signingKey = key.getPublicKey();
+
+    callback(null, signingKey);
+  } catch (e) {
+    callback(e, null);
+  }
+}
+
+async function getUserToken(access_code) {
+  const oidc_config = await getOpenIDConfig();
+  const token_url = oidc_config.token_endpoint;
+
+  return new Promise(function(resolve, reject) {
+    const url = new URL(token_url);
+
+    const post_data = querystring.stringify({
+      'client_id' : OIDC_CLIENT_ID,
+      'client_secret' : OIDC_CLIENT_SECRET,
+      'code' : access_code
+    });
+
+    const options = {
+      hostname: url.host,
+      port: 443,
+      path: url.pathname,
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Length': post_data.length
+      }
+    };
+
+    const req = https.request(options, res => {
+      res.on('data', d => {
+        if (res.statusCode == 200) {
+          resolve(JSON.parse(d.toString()));
+        } else {
+          resolve({"error": true})
+        }
+      });
+    });
+
+    req.on('error', error => {
+      reject(error);
+    });
+
+    req.write(post_data);
+    req.end();
+  });
+}
+
+function isAllowedIp(ip) {
   if (!ip || typeof(ip) != "string" || ip.length == 0) {
     return false;
   }

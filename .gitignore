@@ -5,3 +5,4 @@
 **/*-lock.json
 **/*-build/
 **/*.min.js
+**/.env

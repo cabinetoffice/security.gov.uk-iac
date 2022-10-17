@@ -1,5 +1,5 @@
-//During the test the env variable is set to test
-process.env.NODE_ENV = 'test';
+const dotenv = require('dotenv');
+dotenv.config();
 
 //Require the dev-dependencies
 const chai = require('chai');
@@ -58,9 +58,8 @@ describe('/api', () => {
         expect(headers).to.include.members(["location", "set-cookie"]);
 
         const cookie_val = res.header["set-cookie"][0].split("=")[1].split(".")[0];
-        expect(cookie_val).to.equal("s%3A");
-
-        expect(res.header.location).to.equal("/no-access");
+        expect(cookie_val).to.contain("signed_in%22%3Afalse");
+        expect(res.header.location).to.contain("/auth/oidc?");
       });
     });
 
@@ -83,7 +82,6 @@ describe('/api', () => {
       });
     });
 
-
     describe('/api/auth/status', () => {
       it('it should be signed in with valid cookie (from previous request)', async () => {
 
@@ -93,6 +91,29 @@ describe('/api', () => {
 
         expect(res.status).to.equal(200);
         expect(res.body.signed_in).to.equal(true);
+      });
+    });
+
+    describe('/api/auth/oidc_callback', () => {
+      it('oidc_callback should work', async () => {
+        process.env["ALLOWED_IPS"] = "";
+
+        let res = await chai.request(server)
+        .get('/api/auth/sign-in?redirect=/private-example.html')
+        .redirects(0);
+        auth_cookie = res.header["set-cookie"][0].split(";")[0];
+
+        const ac = decodeURIComponent(auth_cookie).split('"');
+        const state = ac[9];
+
+        let res2 = await chai.request(server)
+        .get('/api/auth/oidc_callback?code=123&state=' + state)
+        .set('cookie', auth_cookie)
+        .redirects(0);
+
+        console.log(res2.body);
+
+        expect(res2.status).not.to.equal(200);
       });
     });
 
