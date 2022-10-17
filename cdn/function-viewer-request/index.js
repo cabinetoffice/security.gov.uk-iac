@@ -13,6 +13,12 @@ function handler(event) {
     host = host.split(":")[0];
     request.headers['true-host'] = {value: host};
 
+    var ua = '';
+    if (typeof(request.headers['user-agent']) == "object") {
+        ua = request.headers['user-agent'].value;
+    }
+    request.headers['true-user-agent'] = {value: ua};
+
     return request;
 }
 

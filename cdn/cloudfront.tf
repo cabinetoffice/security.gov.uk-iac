@@ -37,6 +37,7 @@ resource "aws_cloudfront_origin_request_policy" "custom_lae_s3_origin" {
         "Access-Control-Request-Headers",
         "X-Forwarded-For",
         "true-client-ip",
+        "true-user-agent",
         "true-host",
       ]
     }

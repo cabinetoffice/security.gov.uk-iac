@@ -158,6 +158,9 @@ describe("viewer_request", function() {
     expect(headers).to.include('true-host');
     expect(req.headers['true-host'].value).to.equal('video.example.com');
 
+    expect(headers).to.include('true-user-agent');
+    expect(req.headers['true-user-agent'].value).to.equal('Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:83.0) Gecko/20100101 Firefox/83.0');
+
     done();
   });
 });
