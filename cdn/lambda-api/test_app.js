@@ -47,19 +47,21 @@ describe('/api', () => {
     describe('/api/auth/sign-in', () => {
       it('from invalid IP, it should not sign-in', async () => {
         process.env["ALLOWED_IPS"] = "";
+        if ("OIDC_CONFIGURATION_URL" in process.env) {
 
-        let res = await chai.request(server)
-        .get('/api/auth/sign-in?redirect=/private-example.html')
-        .redirects(0);
+          let res = await chai.request(server)
+          .get('/api/auth/sign-in?redirect=/private-example.html')
+          .redirects(0);
 
-        expect(res.status).to.equal(302);
+          expect(res.status).to.equal(302);
 
-        const headers = Object.keys(res.headers);
-        expect(headers).to.include.members(["location", "set-cookie"]);
+          const headers = Object.keys(res.headers);
+          expect(headers).to.include.members(["location", "set-cookie"]);
 
-        const cookie_val = res.header["set-cookie"][0].split("=")[1].split(".")[0];
-        expect(cookie_val).to.contain("signed_in%22%3Afalse");
-        expect(res.header.location).to.contain("/auth/oidc?");
+          const cookie_val = res.header["set-cookie"][0].split("=")[1].split(".")[0];
+          expect(cookie_val).to.contain("signed_in%22%3Afalse");
+          expect(res.header.location).to.contain("/auth/oidc?");
+        }
       });
     });
 
@@ -97,23 +99,25 @@ describe('/api', () => {
     describe('/api/auth/oidc_callback', () => {
       it('oidc_callback should work', async () => {
         process.env["ALLOWED_IPS"] = "";
+        if ("OIDC_CONFIGURATION_URL" in process.env) {
 
-        let res = await chai.request(server)
-        .get('/api/auth/sign-in?redirect=/private-example.html')
-        .redirects(0);
-        auth_cookie = res.header["set-cookie"][0].split(";")[0];
+          let res = await chai.request(server)
+          .get('/api/auth/sign-in?redirect=/private-example.html')
+          .redirects(0);
+          auth_cookie = res.header["set-cookie"][0].split(";")[0];
 
-        const ac = decodeURIComponent(auth_cookie).split('"');
-        const state = ac[9];
+          const ac = decodeURIComponent(auth_cookie).split('"');
+          const state = ac[9];
 
-        let res2 = await chai.request(server)
-        .get('/api/auth/oidc_callback?code=123&state=' + state)
-        .set('cookie', auth_cookie)
-        .redirects(0);
+          let res2 = await chai.request(server)
+          .get('/api/auth/oidc_callback?code=123&state=' + state)
+          .set('cookie', auth_cookie)
+          .redirects(0);
 
-        console.log(res2.body);
+          console.log(res2.body);
 
-        expect(res2.status).not.to.equal(200);
+          expect(res2.status).not.to.equal(200);
+        }
       });
     });
 
