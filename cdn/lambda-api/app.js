@@ -1,3 +1,4 @@
+const fs = require('fs');
 const express = require('express')
 const ipRangeCheck = require("ip-range-check");
 const cookieParser = require('cookie-parser')
@@ -26,7 +27,6 @@ AWS.config.update({ region: 'eu-west-2' });
 let COOKIE_NAME = "__Host-Session";
 
 const app = express()
-app.ALLOWED_EMAIL_DOMAINS = strToList(process.env['ALLOWED_EMAIL_DOMAINS']);
 app.ALLOWED_IPS = strToList(process.env['ALLOWED_IPS']);
 
 if (!IS_LAMBDA) {
@@ -136,6 +136,21 @@ app.get('/api/status', (req, res) => {
   res.status(200);
   res.setHeader('Content-Type', 'application/json');
   res.send(JSON.stringify({ status: 'OK' }));
+});
+
+app.get('/api/routes', (req, res) => {
+  let resp = {};
+
+  const ss = sessionStatus(req);
+  if ("signed_in" in ss && ss.signed_in) {
+    resp = getAllRoutes();
+  } else {
+    resp = getPublicOnlyRoutes();
+  }
+
+  res.status(200);
+  res.setHeader('Content-Type', 'application/json');
+  res.send(JSON.stringify(resp));
 });
 
 app.get('/api/teapot', (req, res) => {
@@ -291,6 +306,59 @@ app.get('*', (req, res) => {
 
 // ==== functions ====
 
+let _routes = {};
+function getRoutes() {
+  if (Object.keys(_routes).length === 0) {
+    try {
+      let cm = fs.readFileSync('./content_metadata.json');
+      _routes = JSON.parse(cm);
+    } catch (e) {
+      console.log("getRoutes error:", e);
+    }
+  }
+  return _routes;
+}
+
+let _allRoutes = {};
+function getAllRoutes() {
+  if (Object.keys(_allRoutes).length === 0) {
+    const all_routes = getRoutes();
+
+    for (const rkey in all_routes) {
+      const route = all_routes[rkey];
+      res[rkey] = {
+        "route": rkey,
+        "private": route.private,
+        "title": "page_title" in route ? route.page_title : "",
+        "is_file": "file_reference" in route ? route.file_reference : false,
+        "breadcrumbs": "breadcrumbs" in route ? route.breadcrumbs : {}
+      }
+    }
+  }
+  return _allRoutes;
+}
+
+let _publicOnlyRoutes = {};
+function getPublicOnlyRoutes() {
+  if (Object.keys(_publicOnlyRoutes).length === 0) {
+    const all_routes = getRoutes();
+
+    for (const rkey in all_routes) {
+      const route = all_routes[rkey];
+      if (!route.private) {
+        _publicOnlyRoutes[rkey] = {
+          "route": rkey,
+          "private": route.private,
+          "title": "page_title" in route ? route.page_title : "",
+          "is_file": "file_reference" in route ? route.file_reference : false,
+          "breadcrumbs": "breadcrumbs" in route ? route.breadcrumbs : {}
+        }
+      }
+    }
+  }
+  return _publicOnlyRoutes;
+}
+
 function sessionStatus(req) {
   let result = { "signed_in": false };
 
@@ -346,31 +414,6 @@ function signOut(res) {
 function strToList(s) {
   if (typeof(s) != "string" || s.trim() == "") { return []; }
   return s.toLowerCase().replaceAll(" ","").split(",");
-}
-
-function check_email(email) {
-  let res = false;
-
-  if (!email || typeof(email) == "undefined" || email.indexOf("@") == -1) {
-    return res;
-  }
-
-  const domain = email.toLowerCase().split("@")[1];
-
-  for (var i = 0; i < app.ALLOWED_EMAIL_DOMAINS.length; i++) {
-    if (app.ALLOWED_EMAIL_DOMAINS[i].indexOf("*") == 0) {
-      const domainEnding = app.ALLOWED_EMAIL_DOMAINS[i].slice(1);
-      if (app.ALLOWED_EMAIL_DOMAINS.endsWith(domainEnding)) {
-        res = true;
-        break;
-      }
-    } else if (app.ALLOWED_EMAIL_DOMAINS[i] == domain) {
-      res = true;
-      break;
-    }
-  }
-
-  return res;
 }
 
 async function getOpenIDConfig() {

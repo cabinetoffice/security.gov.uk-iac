@@ -9,6 +9,13 @@ function handler(event) {
       return;
     }
 
+    var uri = typeof(event.request) == "undefined" ||
+              typeof(event.request.uri) == "undefined" ? "/" : event.request.uri;
+    var to_cache = false;
+    if (uri.indexOf("/assets/") == 0) {
+      to_cache = true;
+    }
+
     var headers = response.headers;
 
     var currentHeaderKeys = Object.keys(headers);
@@ -18,6 +25,12 @@ function handler(event) {
     }
     if ('x-powered-by' in headers) {
         delete headers['x-powered-by'];
+    }
+
+    if (!currentHeaderKeys.includes('cache-control')) {
+      headers['cache-control'] = {
+        value: to_cache ? "public, max-age=3600, immutable" : "private, no-store"
+      };
     }
 
     if (!currentHeaderKeys.includes('strict-transport-security')) {

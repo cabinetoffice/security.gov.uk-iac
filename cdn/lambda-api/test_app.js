@@ -33,6 +33,16 @@ describe('/api', () => {
     });
   });
 
+  describe('/api/routes', () => {
+    it('should return json', async () => {
+      let res = await chai.request(server)
+      .get('/api/routes')
+
+      expect(Object.keys(res.body)).to.have.lengthOf.above(1);
+      expect(res.status).to.equal(200);
+    });
+  });
+
   describe('/api/auth', () => {
     describe('/api/auth/status', () => {
       it('it should not be signed in', async () => {

@@ -1,6 +1,7 @@
 resource "null_resource" "build_api_lambda" {
   count    = var.IS_CI ? 0 : 1
   triggers = {
+    content_md_hash = sha256(file("../../security.gov.uk-content/build/content_metadata.json"))
     app_js_hash = sha256(file("lambda-api/app.js"))
     lambda_js_hash = sha256(file("lambda-api/lambda.js"))
     package_json_hash = sha256(file("lambda-api/package.json"))
@@ -41,9 +42,7 @@ resource "aws_lambda_function" "api_lambda" {
   lifecycle {
     ignore_changes = [
       last_modified,
-      environment.0.variables["ALLOWED_IPS"],           # clear CSV
-      environment.0.variables["ALLOWED_EMAIL_DOMAINS"], # clear CSV
-      environment.0.variables["SESSION_SECRET"],        # encrypted string
+      environment
     ]
   }
 

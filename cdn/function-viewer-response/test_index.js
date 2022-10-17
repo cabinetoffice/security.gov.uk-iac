@@ -155,6 +155,9 @@ describe("viewer_response", function() {
     expect(headers).to.not.include('content-security-policy-report-only');
     expect(headers).to.not.include('server');
     expect(headers).to.include('x-frame-options');
+    
+    expect(headers).to.include('cache-control');
+    expect(res["headers"]["cache-control"].value).to.equal("private, no-store");
 
     done();
   });
