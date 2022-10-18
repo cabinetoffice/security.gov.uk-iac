@@ -19,7 +19,7 @@ data "aws_cloudfront_origin_request_policy" "s3_for_caching" {
 }
 
 resource "aws_cloudfront_origin_request_policy" "custom_lae_s3_origin" {
-  name    = "Custom-Lambda-at-Edge-S3-Origin"
+  name    = "Custom-Lambda-at-Edge-S3-Origin-${terraform.workspace}"
   comment = ""
 
   cookies_config {
@@ -47,6 +47,38 @@ resource "aws_cloudfront_origin_request_policy" "custom_lae_s3_origin" {
     query_strings {
       items = ["t"]
     }
+  }
+}
+
+resource "aws_cloudfront_origin_request_policy" "api_origin" {
+  name    = "Custom-API-Origin-${terraform.workspace}"
+  comment = ""
+
+  cookies_config {
+    cookie_behavior = "whitelist"
+    cookies {
+      items = [
+        "__Host-Session",
+        "__host-session",
+      ]
+    }
+  }
+  headers_config {
+    header_behavior = "whitelist"
+    headers {
+      items = [
+        "Origin",
+        "Access-Control-Request-Method",
+        "Access-Control-Request-Headers",
+        "X-Forwarded-For",
+        "true-client-ip",
+        "true-user-agent",
+        "true-host",
+      ]
+    }
+  }
+  query_strings_config {
+    query_string_behavior = "all"
   }
 }
 
@@ -85,8 +117,8 @@ resource "aws_cloudfront_distribution" "cdn" {
   }
 
   origin {
-    domain_name = "www-api.${local.primary_domain}"
-    origin_id   = local.alb_origin_id
+    domain_name = split("/", aws_lambda_function_url.api_lambda.function_url)[2]
+    origin_id   = local.api_origin_id
 
     custom_origin_config {
       http_port  = "80"
@@ -102,7 +134,7 @@ resource "aws_cloudfront_distribution" "cdn" {
   comment             = local.primary_domain
   default_root_object = "index.html"
 
-  aliases = [local.primary_domain, "www.${local.primary_domain}"]
+  aliases = terraform.workspace == "prod" ? [] : [local.primary_domain, "www.${local.primary_domain}"]
 
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD"]
@@ -151,10 +183,10 @@ resource "aws_cloudfront_distribution" "cdn" {
     path_pattern     = "/api/*"
     allowed_methods  = ["HEAD", "DELETE", "POST", "GET", "OPTIONS", "PUT", "PATCH"]
     cached_methods   = ["HEAD", "GET"]
-    target_origin_id = local.alb_origin_id
+    target_origin_id = local.api_origin_id
 
     cache_policy_id          = data.aws_cloudfront_cache_policy.caching_disabled.id
-    origin_request_policy_id = data.aws_cloudfront_origin_request_policy.all.id
+    origin_request_policy_id = aws_cloudfront_origin_request_policy.api_origin.id
     compress               = false
     viewer_protocol_policy = "redirect-to-https"
 

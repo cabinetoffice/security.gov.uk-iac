@@ -103,7 +103,8 @@ app.use(async (req, res, next) => {
     req.ip = client_ip;
   }
 
-  // set req.host
+  //console.log(norm_headers);
+
   let host = '';
   if ('true-host' in norm_headers) {
       host = norm_headers['true-host'];
@@ -112,7 +113,8 @@ app.use(async (req, res, next) => {
   } else if (':authority' in norm_headers) {
       host = norm_headers[':authority'];
   }
-  req.hostname = host.split(":")[0];
+  host = host.split(":")[0];
+  req.hostname = host;
 
   if (req.path.indexOf('/api/auth') == 0) {
     getOpenIDConfig();
@@ -120,7 +122,8 @@ app.use(async (req, res, next) => {
 
   let allowed_hosts = [
     "nonprod.security.gov.uk",
-    "security.gov.uk"
+    "security.gov.uk",
+    "d1olglap7yrqp9.cloudfront.net"
   ];
   if (!IS_LAMBDA) {
     allowed_hosts.push("localhost");
@@ -128,7 +131,7 @@ app.use(async (req, res, next) => {
   }
 
   // return bad request if the host isn't recognised
-  if (!allowed_hosts.includes(req.hostname)) {
+  if (!allowed_hosts.includes(host)) {
     res.status(400);
     res.send("Bad Request");
   } else {

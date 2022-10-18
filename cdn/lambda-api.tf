@@ -20,6 +20,11 @@ data "archive_file" "api_lambda_zip" {
   output_path = "lambda-api.zip"
 }
 
+resource "aws_lambda_function_url" "api_lambda" {
+  function_name      = aws_lambda_function.api_lambda.function_name
+  authorization_type = "NONE"
+}
+
 resource "aws_lambda_function" "api_lambda" {
   filename         = data.archive_file.api_lambda_zip.output_path
   source_code_hash = data.archive_file.api_lambda_zip.output_base64sha256
@@ -33,11 +38,6 @@ resource "aws_lambda_function" "api_lambda" {
   memory_size = 256
   timeout     = 15
   publish     = true
-
-  environment {
-    variables = {
-    }
-  }
 
   lifecycle {
     ignore_changes = [
@@ -98,7 +98,7 @@ resource "aws_iam_policy" "api_lambda_policy" {
       },
       {
         Action = [ "s3:GetObject" ],
-        Resource = "arn:aws:s3:::${local.primary_domain}/*"
+        Resource = "${aws_s3_bucket.cdn_source_bucket.arn}/*"
         Effect = "Allow"
       }
     ]

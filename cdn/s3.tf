@@ -1,7 +1,7 @@
 resource "aws_s3_bucket" "cdn_source_bucket" {
-  bucket = local.primary_domain
+  bucket = local.s3_bucket_name
 
-  tags = { "Name" : local.primary_domain }
+  tags = { "Name" : local.s3_bucket_name }
 }
 
 resource "aws_cloudfront_origin_access_identity" "cdn_source_bucket" {

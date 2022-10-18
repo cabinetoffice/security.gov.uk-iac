@@ -185,7 +185,11 @@ async function handler(event) {
     }
 
     if (norm_uri.match(/^\/profile/)) {
-      return redirect("https://dgmhhlf9nkfe8.cloudfront.net/profile");
+      return redirect(
+        "https://sso." + (
+          host.indexOf("nonprod") == 0 ? "nonprod-" : ""
+        )+"service.security.gov.uk/profile"
+      );
     }
 
     if (norm_uri.match(/^\/.well[-_]known/)) {
