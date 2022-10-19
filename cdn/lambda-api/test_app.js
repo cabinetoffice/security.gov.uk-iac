@@ -81,7 +81,7 @@ describe('/api', () => {
 
           const cookie_val = res.header["set-cookie"][0].split("=")[1].split(".")[0];
           expect(cookie_val).to.contain("signed_in%22%3Afalse");
-          expect(res.header.location).to.contain("/auth/oidc?");
+          expect(res.header.location).to.contain("?response_type");
         }
       });
     });

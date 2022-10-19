@@ -14,8 +14,8 @@ const IS_LAMBDA = (typeof(FUNCTION_NAME) == "string");
 const LOCAL_PORT = 8002;
 
 const URL_HOST = process.env['URL_HOST'];
-const OIDC_CLIENT_ID = process.env['OIDC_CLIENT_ID'];
-const OIDC_CLIENT_SECRET = process.env['OIDC_CLIENT_SECRET'];
+const OIDC_CLIENT_ID = process.env['OIDC_CLIENT_ID'] || '';
+const OIDC_CLIENT_SECRET = process.env['OIDC_CLIENT_SECRET'] || '';
 const OIDC_CONFIGURATION_URL = process.env['OIDC_CONFIGURATION_URL'];
 const OIDC_JWKS_URI = process.env['OIDC_JWKS_URI'];
 const OIDC_TOKEN_ENDPOINT = process.env['OIDC_TOKEN_ENDPOINT'];
@@ -29,7 +29,7 @@ AWS.config.update({ region: 'eu-west-2' });
 
 let COOKIE_NAME = "__Host-Session";
 
-const app = express()
+const app = express();
 app.ALLOWED_IPS = strToList(process.env['ALLOWED_IPS']);
 
 if (!IS_LAMBDA) {
@@ -48,45 +48,15 @@ const asyncHandler = (f) => (req, res, next) => {
 app.use(express.json());
 app.use(cookieParser(app.SESSION_SECRET));
 
-// ==== routes ====
+// ==== normalise request ====
 
-app.use((req, res, next) => {
-  res.on('finish', async () => {
-    log_item = {
-      "time": new Date()
-    }
-    try {
-      const { event, context } = getCurrentInvoke();
-      log_item["event"] = IS_LAMBDA ? event : {
-        "hostname": req.hostname,
-        "url": req.url,
-        "ip": req.ip,
-      };
-      log_item["context"] = IS_LAMBDA ? context : {"local": true};
-      log_item["result"] = {
-        "headers": res.getHeaders(),
-        "statusCode": typeof(res.statusCode) != "undefined" ? res.statusCode : 0,
-        "statusMessage": typeof(res.statusMessage) != "undefined" ? res.statusMessage : "UNKNOWN",
-      };
-      if (typeof(log_item.result.headers["set-cookie"]) == "string") {
-        log_item.result.headers["set-cookie"] =
-          log_item.result.headers["set-cookie"].replace(/Session=.+$/, "Session=REDACTED");
-      }
-    } catch (e) {
-      log_item["error"] = e;
-    }
-    console.log(JSON.stringify(log_item));
-  });
-  next();
-});
-
-app.use(async (req, res, next) => {
+function normaliseEveryRequest(req, res, next) {
   // normalise headers
   let norm_headers = {};
   for (header in req.headers) {
-    norm_headers[header.toLowerCase()] = (typeof(req.headers[header]) != "string") ?
-      req.headers[header].value
-      : req.headers[header];
+    norm_headers[header.toLowerCase()] = (
+      typeof(req.headers[header]) != "string"
+    ) ? req.headers[header].value : req.headers[header];
   }
 
   // set req.ip if req.ip isn't already set
@@ -106,7 +76,7 @@ app.use(async (req, res, next) => {
     req.ip = client_ip;
   }
 
-  //console.log(norm_headers);
+  // console.log(norm_headers);
 
   let host = '';
   if ('true-host' in norm_headers) {
@@ -117,11 +87,10 @@ app.use(async (req, res, next) => {
       host = norm_headers[':authority'];
   }
   host = host.split(":")[0];
+  req.headers["host"] = host;
+  req.host = host;
   req.hostname = host;
-
-  if (req.path.indexOf('/api/auth') == 0) {
-    getOpenIDConfig();
-  }
+  req.true_host = host;
 
   let allowed_hosts = [
     "nonprod.security.gov.uk",
@@ -138,8 +107,43 @@ app.use(async (req, res, next) => {
     res.status(400);
     res.send("Bad Request");
   } else {
+    // if (req.path.indexOf('/api/auth') == 0) {
+    //   getOpenIDConfig();
+    // }
     next();
   }
+}
+
+app.use(normaliseEveryRequest);
+
+// ==== routes ====
+
+app.use((req, res, next) => {
+  res.on('finish', function() {
+    log_item = {
+      "time": new Date()
+    }
+    try {
+      const { event, context } = getCurrentInvoke();
+      log_item["event"] = IS_LAMBDA ? event : {
+        "hostname": req.hostname,
+        "url": req.url,
+        "ip": req.ip,
+      };
+      log_item["context"] = IS_LAMBDA ? context : {"local": true};
+      log_item["result"] = {
+        "headers": res.getHeaders(),
+        "statusCode": typeof(res.statusCode) != "undefined" ? res.statusCode : 0,
+        "statusMessage": typeof(res.statusMessage) != "undefined" ? res.statusMessage : "UNKNOWN",
+      };
+    } catch (e) {
+      log_item["error"] = e;
+    }
+
+    let log_string = redactString(JSON.stringify(log_item));
+    console.log(log_string);
+  });
+  next();
 });
 
 app.get('/api/status', (req, res) => {
@@ -320,6 +324,23 @@ app.get('*', (req, res) => {
   res.send("No Content");
 });
 
+app.use((err, req, res, next) => {
+  log_item = {
+    "time": new Date(),
+    "error": err ? (
+      typeof(err) == "object" ? {
+        "stack": typeof(err["stack"]) == "string" ? err["stack"] : "",
+        "message": typeof(err["message"]) == "string" ? err["message"] : "",
+      } : err
+    ) : null
+  }
+
+  let log_string = redactString(JSON.stringify(log_item));
+  console.log(log_string);
+
+  res.redirect("/error?t=" + Date.now());
+});
+
 // ==== functions ====
 
 let _routes = {};
@@ -395,7 +416,8 @@ function sessionStatus(req) {
 
 function createSession(res, email, type, signed_in, state=null, display_name=null) {
   const now = new Date();
-  const expiresAt = new Date(+now + (6 * 60 * 60 * 1000));
+  const expiryMinutes = 10;
+  const expiresAt = new Date(+now + (expiryMinutes * 60 * 1000));
   const session = {
     "signed_in": signed_in,
     "type": type,
@@ -530,6 +552,28 @@ async function getUserToken(access_code) {
     req.write(post_data);
     req.end();
   });
+}
+
+function redactString(s) {
+  const redacted_string = "REDACTED";
+
+  for (const r of [
+    new RegExp(`(` + COOKIE_NAME + `=)[^;"]+`, "g"),
+    new RegExp(`(state=)[^;"]+`, "g")
+  ]) {
+    s = s.replace(r, "$1"+redacted_string);
+  }
+
+  for (const t of [
+    app.SESSION_SECRET,
+    OIDC_CLIENT_ID,
+    OIDC_CLIENT_SECRET
+  ]) {
+    if (t) {
+      s = s.replace(t, redacted_string);
+    }
+  }
+  return s;
 }
 
 function isAllowedIp(ip) {
