@@ -17,6 +17,8 @@ const URL_HOST = process.env['URL_HOST'];
 const OIDC_CLIENT_ID = process.env['OIDC_CLIENT_ID'];
 const OIDC_CLIENT_SECRET = process.env['OIDC_CLIENT_SECRET'];
 const OIDC_CONFIGURATION_URL = process.env['OIDC_CONFIGURATION_URL'];
+const OIDC_JWKS_URI = process.env['OIDC_JWKS_URI'];
+const OIDC_TOKEN_ENDPOINT = process.env['OIDC_TOKEN_ENDPOINT'];
 
 global.oidc_configuration = {};
 global.jwks_client = {};
@@ -466,8 +468,8 @@ async function getKey(header, callback) {
   const kid = header.kid;
 
   if (Object.keys(jwks_client).length === 0) {
-    const oidc_config = await getOpenIDConfig();
-    const jwks_url = oidc_config.jwks_uri;
+    // const oidc_config = await getOpenIDConfig();
+    const jwks_url = OIDC_JWKS_URI; oidc_config.jwks_uri;
 
     jwks_client = jwksClient({
       jwksUri: jwks_url,
@@ -487,8 +489,8 @@ async function getKey(header, callback) {
 }
 
 async function getUserToken(access_code) {
-  const oidc_config = await getOpenIDConfig();
-  const token_url = oidc_config.token_endpoint;
+  // const oidc_config = await getOpenIDConfig();
+  const token_url = OIDC_TOKEN_ENDPOINT; // oidc_config.token_endpoint;
 
   return new Promise(function(resolve, reject) {
     const url = new URL(token_url);
