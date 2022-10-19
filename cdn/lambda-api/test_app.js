@@ -176,4 +176,14 @@ describe('/api', () => {
       });
     });
   });
+
+  describe('/api/throw_error', () => {
+    it('it should log and redirect', async () => {
+      let res = await chai.request(server)
+      .get('/api/throw_error')
+      .redirects(0);
+
+      expect(res.status).to.equal(302);
+    });
+  });
 });

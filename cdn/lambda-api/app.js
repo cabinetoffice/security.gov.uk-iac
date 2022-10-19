@@ -311,6 +311,13 @@ app.get('/api/auth/sign-in', asyncHandler(async (req, res) => {
   res.redirect(redirect_url);
 }));
 
+app.get('/api/throw_error', (req, res) => {
+  throw new Error("testing with /api/throw_error");
+
+  res.status(204);
+  res.send("No Content");
+});
+
 app.get('/api/auth/sign-out', (req, res) => {
   let redirect_url = "/";
 
