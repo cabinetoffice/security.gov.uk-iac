@@ -19,6 +19,7 @@ const OIDC_CLIENT_SECRET = process.env['OIDC_CLIENT_SECRET'];
 const OIDC_CONFIGURATION_URL = process.env['OIDC_CONFIGURATION_URL'];
 const OIDC_JWKS_URI = process.env['OIDC_JWKS_URI'];
 const OIDC_TOKEN_ENDPOINT = process.env['OIDC_TOKEN_ENDPOINT'];
+const OIDC_AUTHORIZATION_ENDPOINT = process.env['OIDC_AUTHORIZATION_ENDPOINT'];
 
 global.oidc_configuration = {};
 global.jwks_client = {};
@@ -286,8 +287,8 @@ app.get('/api/auth/sign-in', asyncHandler(async (req, res) => {
   if (signed_in) {
     createSession(res, email, sign_in_type, true);
   } else {
-    const oidc_config = await getOpenIDConfig();
-    const auth_url = oidc_config.authorization_endpoint;
+    // const oidc_config = await getOpenIDConfig();
+    const auth_url = OIDC_AUTHORIZATION_ENDPOINT; // oidc_config.authorization_endpoint;
 
     const state = uuid.v4();
     createSession(res, email, null, false, state);
@@ -469,7 +470,7 @@ async function getKey(header, callback) {
 
   if (Object.keys(jwks_client).length === 0) {
     // const oidc_config = await getOpenIDConfig();
-    const jwks_url = OIDC_JWKS_URI; oidc_config.jwks_uri;
+    const jwks_url = OIDC_JWKS_URI; // oidc_config.jwks_uri;
 
     jwks_client = jwksClient({
       jwksUri: jwks_url,
