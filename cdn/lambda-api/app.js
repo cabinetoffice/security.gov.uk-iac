@@ -257,7 +257,7 @@ app.get('/api/auth/oidc_callback', asyncHandler(async (req, res) => {
     return;
   }
 
-  res.redirect("/error");
+  // res.redirect("/error");
 }));
 
 app.get('/api/auth/sign-in', asyncHandler(async (req, res) => {
