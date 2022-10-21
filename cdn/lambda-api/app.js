@@ -96,9 +96,8 @@ function normaliseEveryRequest(req, res, next) {
   req.true_host = host;
 
   let allowed_hosts = [
-    "nonprod.security.gov.uk",
-    "security.gov.uk",
-    "d1olglap7yrqp9.cloudfront.net"
+    "www.nonprod.security.gov.uk",
+    "www.security.gov.uk",
   ];
   if (!IS_LAMBDA) {
     allowed_hosts.push("localhost");
@@ -469,8 +468,8 @@ function _getOpenIDConfig() {
     const url = new URL(OIDC_CONFIGURATION_URL);
 
     const options = {
-      hostname: url.host,
-      port: 443,
+      hostname: url.hostname,
+      port: parseInt(url.port) || 443,
       path: url.pathname,
       method: 'GET',
       headers: { }
