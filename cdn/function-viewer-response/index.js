@@ -42,7 +42,7 @@ function handler(event) {
     }
 
     if (!currentHeaderKeys.includes('content-security-policy')) {
-      headers['content-security-policy'] = { value: "default-src 'self'; frame-src 'self' https://www.youtube-nocookie.com/ https://player.vimeo.com/;" };
+      headers['content-security-policy'] = { value: "default-src 'self' https://nonprod.security.gov.uk https://security.gov.uk; frame-src 'self' https://www.youtube-nocookie.com/ https://player.vimeo.com/;" };
     }
 
     if (!currentHeaderKeys.includes('x-content-type-options')) {
@@ -96,7 +96,6 @@ function handler(event) {
       headers['cross-origin-resource-policy'] = { value: "same-origin" };
     }
 
-    //Return modified response
     return response;
 }
 

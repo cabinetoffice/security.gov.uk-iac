@@ -16,7 +16,7 @@ fixture = {
             "host": [
               {
                 "key": "Host",
-                "value": "nonprod.security.gov.uk"
+                "value": "www.nonprod.security.gov.uk"
               }
             ]
           }
@@ -41,7 +41,7 @@ fixture_1 = {
             "host": [
               {
                 "key": "Host",
-                "value": "nonprod.security.gov.uk"
+                "value": "www.nonprod.security.gov.uk"
               }
             ],
             "origin": [
@@ -78,7 +78,7 @@ fixture_2 = {
             "host": [
               {
                 "key": "Host",
-                "value": "nonprod.security.gov.uk"
+                "value": "www.nonprod.security.gov.uk"
               }
             ]
           }
@@ -103,7 +103,7 @@ fixture_3 = {
             "host": [
               {
                 "key": "Host",
-                "value": "nonprod.security.gov.uk"
+                "value": "www.nonprod.security.gov.uk"
               }
             ],
             "cookie": [
@@ -134,7 +134,7 @@ fixture_4 = {
             "host": [
               {
                 "key": "Host",
-                "value": "nonprod.security.gov.uk"
+                "value": "www.nonprod.security.gov.uk"
               }
             ]
           }
@@ -159,7 +159,57 @@ fixture_5 = {
             "host": [
               {
                 "key": "Host",
-                "value": "nonprod.security.gov.uk"
+                "value": "www.nonprod.security.gov.uk"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
+
+fixture_6 = {
+  "Records": [
+    {
+      "cf": {
+        "config": {
+          "distributionId": "EXAMPLE"
+        },
+        "request": {
+          "uri": "/robots.txt",
+          "method": "GET",
+          "clientIp": "2001:cdba::3257:9652",
+          "headers": {
+            "host": [
+              {
+                "key": "Host",
+                "value": "www.nonprod.security.gov.uk"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
+
+fixture_7 = {
+  "Records": [
+    {
+      "cf": {
+        "config": {
+          "distributionId": "EXAMPLE"
+        },
+        "request": {
+          "uri": "/robots.txt",
+          "method": "GET",
+          "clientIp": "2001:cdba::3257:9652",
+          "headers": {
+            "host": [
+              {
+                "key": "Host",
+                "value": "www.security.gov.uk"
               }
             ]
           }
@@ -220,6 +270,22 @@ describe("origin_request", function() {
   it('fixture_5', function(done) {
     origin_request.wrap_handler(fixture_5, {}, function(na, res) {
       expect(res.uri).to.equal('/index.html');
+      done();
+    });
+  });
+
+  it('fixture_6', function(done) {
+    origin_request.wrap_handler(fixture_6, {}, function(na, res) {
+      expect(res.status).to.equal(200);
+      expect(res.body).to.contain('Disallow');
+      done();
+    });
+  });
+
+  it('fixture_7', function(done) {
+    origin_request.wrap_handler(fixture_7, {}, function(na, res) {
+      expect(res.status).to.equal(200);
+      expect(res.body).to.contain('Allow');
       done();
     });
   });

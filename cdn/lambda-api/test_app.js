@@ -127,11 +127,11 @@ describe('/api', () => {
           .redirects(0);
           auth_cookie = res.header["set-cookie"][0].split(";")[0];
 
-          const ac = decodeURIComponent(auth_cookie).split('"');
-          const state = ac[9];
+          const ac = decodeURIComponent(auth_cookie);
+          const state = /state":"([^"]+)/g.exec(ac)[1];
 
           let res2 = await chai.request(server)
-          .get('/api/auth/oidc_callback?code=123&state=' + state)
+          .get('/api/auth/oidc_callback?code=60eafc72051e2a715b3ba09fbefca943839ad6c8cc2f14d417fc43bed30a351c&state=' + state)
           .set('cookie', auth_cookie)
           .redirects(0);
 

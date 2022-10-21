@@ -161,11 +161,19 @@ async function handler(event) {
     }
     host = host.split(":")[0];
 
+    if (host == "nonprod.security.gov.uk") {
+      return redirect("https://www.nonprod.security.gov.uk" + norm_uri);
+    }
+
+    if (host == "security.gov.uk") {
+      return redirect("https://www.security.gov.uk" + norm_uri);
+    }
+
     if (![
-      "nonprod.security.gov.uk",
-      "security.gov.uk"
+      "www.nonprod.security.gov.uk",
+      "www.security.gov.uk"
     ].includes(host)) {
-      return redirect("https://security.gov.uk" + norm_uri);
+      return redirect("https://security.gov.uk");
     }
 
     // ==== routes ====
@@ -190,6 +198,20 @@ async function handler(event) {
           host.indexOf("nonprod") == 0 ? "nonprod-" : ""
         )+"service.security.gov.uk/profile"
       );
+    }
+
+    if (norm_uri.match(/^\/robots.txt$/)) {
+      return {
+          status: 200,
+          statusDescription: "OK",
+          body: `User-agent: Googlebot
+User-agent: AdsBot-Google
+User-agent: AdsBot-Google-Mobile
+` + (host == "www.security.gov.uk" ? "Allow" : "Disallow") + `: /
+
+User-agent: *
+` + (host == "www.security.gov.uk" ? "Allow" : "Disallow") + `: /`
+      };
     }
 
     if (norm_uri.match(/^\/.well[-_]known/)) {

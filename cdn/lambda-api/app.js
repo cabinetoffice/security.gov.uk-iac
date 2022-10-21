@@ -20,9 +20,11 @@ const OIDC_CONFIGURATION_URL = process.env['OIDC_CONFIGURATION_URL'];
 const OIDC_JWKS_URI = process.env['OIDC_JWKS_URI'];
 const OIDC_TOKEN_ENDPOINT = process.env['OIDC_TOKEN_ENDPOINT'];
 const OIDC_AUTHORIZATION_ENDPOINT = process.env['OIDC_AUTHORIZATION_ENDPOINT'];
+const OIDC_RESPONSE_TYPE = process.env['OIDC_RESPONSE_TYPE'];
 
 global.oidc_configuration = {};
-global.jwks_client = {};
+global.signing_key = "";
+global.http = null;
 
 const AWS = require('aws-sdk');
 AWS.config.update({ region: 'eu-west-2' });
@@ -35,6 +37,7 @@ app.ALLOWED_IPS = strToList(process.env['ALLOWED_IPS']);
 if (!IS_LAMBDA) {
   app.SESSION_SECRET = "ABC123";
   COOKIE_NAME = "Session";
+  http = require('http');
 } else if (process.env["SESSION_SECRET"].length == 0) {
   return false;
 } else {
@@ -190,74 +193,69 @@ app.get('/api/auth/oidc_callback', asyncHandler(async (req, res) => {
   if ("state" in ss && ss["state"].length > 0)  {
     saved_state = ss["state"];
   }
-
   if (saved_state == null) {
     res.redirect("/error?e=state-missing");
     return;
   }
 
-  let code = null;
-  let state = null;
-
-  if ("code" in req.query) {
-    code = req.query["code"];
-  }
-
   if ("state" in req.query) {
-    state = req.query["state"];
-  }
-
-  if (code != null && state != null) {
-    if (state != saved_state) {
+    if (req.query["state"] != saved_state) {
       res.redirect("/error?e=state-not-matched");
       return;
     }
-
-    const token = await getUserToken(code);
-    if (token) {
-      if ("error" in token && token.error) {
-        res.redirect("/error?e=getusertoken-failed");
-        return;
-      } else if ("id_token" in token) {
-        await jwt.verify(token.id_token, getKey, await function(err, decoded) {
-          if (err && typeof(decoded) == "undefined") {
-            console.log("/api/auth/oidc_callback:jwt-invalid:err:", err);
-            res.redirect("/error?e=jwt-invalid");
-            return;
-          } else if (
-            "email" in decoded &&
-            "email_verified" in decoded &&
-            decoded.email_verified
-          ) {
-            const dn = "display_name" in decoded ? decoded.display_name : null;
-            createSession(res, decoded.email, "sso", true, null, dn);
-
-            let redirect = "/";
-            if ("redirect" in req.query) {
-              const redirect_qs = req.query["redirect"];
-              if (redirect_qs.match(/^\/[^\/\.]/)) {
-                redirect = redirect_qs;
-              }
-            }
-            res.redirect(redirect);
-            return;
-
-          } else {
-            res.redirect("/error?e=jwt-email-not-found");
-            return;
-          }
-        });
-      } else {
-        res.redirect("/error?e=jwt-id_token-missing");
-        return;
-      }
-    }
   } else {
-    res.redirect("/error?e=callback-missing-params");
+    res.redirect("/error?e=callback-missing-state");
     return;
   }
 
-  // res.redirect("/error");
+  let id_token = null;
+  if ("id_token" in req.query) {
+    id_token = req.query["id_token"];
+  } else if ("code" in req.query) {
+    const token_endpoint_resp = await getUserToken(req.query["code"]);
+    if (token_endpoint_resp && "id_token" in token_endpoint_resp) {
+        id_token = token_endpoint_resp.id_token;
+    } else {
+      res.redirect("/error?e=getusertoken-failed");
+      return;
+    }
+  } else {
+    res.redirect("/error?e=callback-missing-param");
+    return;
+  }
+
+  if (id_token == null) {
+    res.redirect("/error?e=jwt-id_token-missing");
+    return;
+  } else {
+    await jwt.verify(id_token, getKey, await function(err, decoded) {
+      if (err && typeof(decoded) == "undefined") {
+        console.log("/api/auth/oidc_callback:jwt-invalid:err:", err);
+        res.redirect("/error?e=jwt-invalid");
+        return;
+      } else if (
+        "email" in decoded &&
+        "email_verified" in decoded &&
+        decoded.email_verified
+      ) {
+        const dn = "display_name" in decoded ? decoded.display_name : null;
+        createSession(res, decoded.email, "sso", true, null, dn);
+
+        let redirect = "/";
+        if ("redirect" in req.query) {
+          const redirect_qs = req.query["redirect"];
+          if (redirect_qs.match(/^\/[^\/\.]/)) {
+            redirect = redirect_qs;
+          }
+        }
+        res.redirect(redirect);
+        return;
+      } else {
+        res.redirect("/error?e=jwt-email-not-found");
+        return;
+      }
+    });
+  }
 }));
 
 app.get('/api/auth/sign-in', asyncHandler(async (req, res) => {
@@ -291,13 +289,11 @@ app.get('/api/auth/sign-in', asyncHandler(async (req, res) => {
   if (signed_in) {
     createSession(res, email, sign_in_type, true);
   } else {
-    // const oidc_config = await getOpenIDConfig();
-    const auth_url = OIDC_AUTHORIZATION_ENDPOINT; // oidc_config.authorization_endpoint;
-
     const state = uuid.v4();
     createSession(res, email, null, false, state);
 
-    let new_redirect = auth_url + "?response_type=token";
+    let new_redirect = OIDC_AUTHORIZATION_ENDPOINT;
+    new_redirect += "?response_type=" + OIDC_RESPONSE_TYPE;
     new_redirect += "&client_id=" + OIDC_CLIENT_ID;
     new_redirect += "&redirect_uri=" +
       encodeURIComponent(URL_HOST + "/api/auth/oidc_callback?redirect=")
@@ -480,7 +476,7 @@ function _getOpenIDConfig() {
       headers: { }
     };
 
-    const req = https.request(options, res => {
+    const req = (IS_LAMBDA ? https : http).request(options, res => {
       res.on('data', d => {
         resolve(JSON.parse(d.toString()));
       });
@@ -495,45 +491,37 @@ function _getOpenIDConfig() {
 }
 
 async function getKey(header, callback) {
-  const kid = header.kid;
-
-  if (Object.keys(jwks_client).length === 0) {
-    // const oidc_config = await getOpenIDConfig();
-    const jwks_url = OIDC_JWKS_URI; // oidc_config.jwks_uri;
-
-    jwks_client = jwksClient({
-      jwksUri: jwks_url,
-      requestHeaders: {}, // Optional
-      timeout: 5000 // 5 seconds
-    });
-  }
-
   try {
-    const key = await jwks_client.getSigningKey(kid);
-    const signingKey = key.getPublicKey();
+    if (signing_key.length == 0) {
+      const jwks_client = jwksClient({
+        jwksUri: OIDC_JWKS_URI,
+        requestHeaders: {}, // Optional
+        timeout: 5000 // 5 seconds
+      });
 
-    callback(null, signingKey);
+      const key = await jwks_client.getSigningKey(header.kid);
+      signing_key = key.getPublicKey();
+    }
+
+    callback(null, signing_key);
   } catch (e) {
     callback(e, null);
   }
 }
 
-async function getUserToken(access_code) {
-  // const oidc_config = await getOpenIDConfig();
-  const token_url = OIDC_TOKEN_ENDPOINT; // oidc_config.token_endpoint;
-
+async function getUserToken(auth_code) {
   return new Promise(function(resolve, reject) {
-    const url = new URL(token_url);
+    const url = new URL(OIDC_TOKEN_ENDPOINT);
 
     const post_data = querystring.stringify({
       'client_id' : OIDC_CLIENT_ID,
       'client_secret' : OIDC_CLIENT_SECRET,
-      'code' : access_code
+      'code' : auth_code
     });
 
     const options = {
-      hostname: url.host,
-      port: 443,
+      hostname: url.hostname,
+      port: parseInt(url.port) || 443,
       path: url.pathname,
       method: 'POST',
       headers: {
@@ -542,8 +530,9 @@ async function getUserToken(access_code) {
       }
     };
 
-    const req = https.request(options, res => {
+    const req = (IS_LAMBDA ? https : http).request(options, res => {
       res.on('data', d => {
+        console.log("data:d:". d);
         if (res.statusCode == 200) {
           resolve(JSON.parse(d.toString()));
         } else {
@@ -563,21 +552,22 @@ async function getUserToken(access_code) {
 
 function redactString(s) {
   const redacted_string = "REDACTED";
+  if (false) {
+    for (const r of [
+      new RegExp(`(` + COOKIE_NAME + `=)[^;"]+`, "g"),
+      new RegExp(`(state=)[^;"]+`, "g")
+    ]) {
+      s = s.replace(r, "$1"+redacted_string);
+    }
 
-  for (const r of [
-    new RegExp(`(` + COOKIE_NAME + `=)[^;"]+`, "g"),
-    new RegExp(`(state=)[^;"]+`, "g")
-  ]) {
-    s = s.replace(r, "$1"+redacted_string);
-  }
-
-  for (const t of [
-    app.SESSION_SECRET,
-    OIDC_CLIENT_ID,
-    OIDC_CLIENT_SECRET
-  ]) {
-    if (t) {
-      s = s.replace(t, redacted_string);
+    for (const t of [
+      app.SESSION_SECRET,
+      OIDC_CLIENT_ID,
+      OIDC_CLIENT_SECRET
+    ]) {
+      if (t) {
+        s = s.replace(t, redacted_string);
+      }
     }
   }
   return s;
