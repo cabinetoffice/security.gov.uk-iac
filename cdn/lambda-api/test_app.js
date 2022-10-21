@@ -38,7 +38,7 @@ describe('/api', () => {
       let res = await chai.request(server)
       .get('/api/status')
       .set('host', "host.invalid")
-      .set('true-host', "security.gov.uk");
+      .set('true-host', "www.security.gov.uk");
 
       expect(res.status).to.equal(200);
     });
