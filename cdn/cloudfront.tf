@@ -132,7 +132,6 @@ resource "aws_cloudfront_distribution" "cdn" {
   enabled             = true
   is_ipv6_enabled     = true
   comment             = local.primary_domain
-  default_root_object = "index.html"
 
   aliases = terraform.workspace == "prod" ? [] : [local.primary_domain, "www.${local.primary_domain}"]
 

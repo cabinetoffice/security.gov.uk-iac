@@ -71,7 +71,7 @@ fixture_2 = {
           "distributionId": "EXAMPLE"
         },
         "request": {
-          "uri": "/private-example.html",
+          "uri": "/private-example",
           "method": "GET",
           "clientIp": "2001:cdba::3257:9652",
           "headers": {
@@ -128,6 +128,31 @@ fixture_4 = {
         },
         "request": {
           "uri": "/example-file/File Name With Spaces.pdf",
+          "method": "GET",
+          "clientIp": "2001:cdba::3257:9652",
+          "headers": {
+            "host": [
+              {
+                "key": "Host",
+                "value": "www.nonprod.security.gov.uk"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
+
+fixture_4_5 = {
+  "Records": [
+    {
+      "cf": {
+        "config": {
+          "distributionId": "EXAMPLE"
+        },
+        "request": {
+          "uri": "/example-file/file%20name%20with%20spaces.pdf",
           "method": "GET",
           "clientIp": "2001:cdba::3257:9652",
           "headers": {
@@ -219,6 +244,156 @@ fixture_7 = {
   ]
 }
 
+fixture_8 = {
+  "Records": [
+    {
+      "cf": {
+        "config": {
+          "distributionId": "EXAMPLE"
+        },
+        "request": {
+          "uri": "/guidance/",
+          "method": "GET",
+          "clientIp": "2001:cdba::3257:9652",
+          "headers": {
+            "host": [
+              {
+                "key": "Host",
+                "value": "www.security.gov.uk"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
+
+fixture_9 = {
+  "Records": [
+    {
+      "cf": {
+        "config": {
+          "distributionId": "EXAMPLE"
+        },
+        "request": {
+          "uri": "/guidance",
+          "method": "GET",
+          "clientIp": "2001:cdba::3257:9652",
+          "headers": {
+            "host": [
+              {
+                "key": "Host",
+                "value": "www.security.gov.uk"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
+
+fixture_10 = {
+  "Records": [
+    {
+      "cf": {
+        "config": {
+          "distributionId": "EXAMPLE"
+        },
+        "request": {
+          "uri": "/guidance/index.html",
+          "method": "GET",
+          "clientIp": "2001:cdba::3257:9652",
+          "headers": {
+            "host": [
+              {
+                "key": "Host",
+                "value": "www.security.gov.uk"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
+
+fixture_11 = {
+  "Records": [
+    {
+      "cf": {
+        "config": {
+          "distributionId": "EXAMPLE"
+        },
+        "request": {
+          "uri": "/guidance.html",
+          "method": "GET",
+          "clientIp": "2001:cdba::3257:9652",
+          "headers": {
+            "host": [
+              {
+                "key": "Host",
+                "value": "www.security.gov.uk"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
+
+fixture_12 = {
+  "Records": [
+    {
+      "cf": {
+        "config": {
+          "distributionId": "EXAMPLE"
+        },
+        "request": {
+          "uri": "/private-example/index.html",
+          "method": "GET",
+          "clientIp": "2001:cdba::3257:9652",
+          "headers": {
+            "host": [
+              {
+                "key": "Host",
+                "value": "www.security.gov.uk"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
+
+fixture_13 = {
+  "Records": [
+    {
+      "cf": {
+        "config": {
+          "distributionId": "EXAMPLE"
+        },
+        "request": {
+          "uri": "/example-file/",
+          "method": "GET",
+          "clientIp": "2001:cdba::3257:9652",
+          "headers": {
+            "host": [
+              {
+                "key": "Host",
+                "value": "www.security.gov.uk"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
+
 describe("origin_request", function() {
   it('no fixture - to return false', function(done) {
     origin_request.wrap_handler({}, {}, function(na, res) {
@@ -248,7 +423,7 @@ describe("origin_request", function() {
     origin_request.wrap_handler(fixture_2, {}, function(na, res) {
       const headers = Object.keys(res.headers);
       expect(headers).to.include.members(["location"]);
-      expect(res.headers["location"][0].value).to.equal('/api/auth/sign-in?redirect=/private-example.html');
+      expect(res.headers["location"][0].value).to.equal('/api/auth/sign-in?redirect=/private-example');
       done();
     });
   });
@@ -262,6 +437,15 @@ describe("origin_request", function() {
 
   it('fixture_4 - test URI with spaces', function(done) {
     origin_request.wrap_handler(fixture_4, {}, function(na, res) {
+      const headers = Object.keys(res.headers);
+      expect(headers).to.include.members(["location"]);
+      expect(res.headers["location"][0].value).to.equal('/example-file/file%20name%20with%20spaces.pdf');
+      done();
+    });
+  });
+
+  it('fixture_4_5 - test URI with spaces', function(done) {
+    origin_request.wrap_handler(fixture_4_5, {}, function(na, res) {
       expect(res.uri).to.equal('/example-file/File%20Name%20With%20Spaces.pdf');
       done();
     });
@@ -286,6 +470,56 @@ describe("origin_request", function() {
     origin_request.wrap_handler(fixture_7, {}, function(na, res) {
       expect(res.status).to.equal(200);
       expect(res.body).to.contain('Allow');
+      done();
+    });
+  });
+
+  it('fixture_8', function(done) {
+    origin_request.wrap_handler(fixture_8, {}, function(na, res) {
+      expect(res.uri).to.equal('/guidance/index.html');
+      done();
+    });
+  });
+
+  it('fixture_9', function(done) {
+    origin_request.wrap_handler(fixture_9, {}, function(na, res) {
+      const headers = Object.keys(res.headers);
+      expect(headers).to.include.members(["location"]);
+      expect(res.headers["location"][0].value).to.equal('/guidance/');
+      done();
+    });
+  });
+
+  it('fixture_10', function(done) {
+    origin_request.wrap_handler(fixture_10, {}, function(na, res) {
+      const headers = Object.keys(res.headers);
+      expect(headers).to.include.members(["location"]);
+      expect(res.headers["location"][0].value).to.equal('/guidance/');
+      done();
+    });
+  });
+
+  it('fixture_11', function(done) {
+    origin_request.wrap_handler(fixture_11, {}, function(na, res) {
+      const headers = Object.keys(res.headers);
+      expect(headers).to.include.members(["location"]);
+      expect(res.headers["location"][0].value).to.equal('/guidance/');
+      done();
+    });
+  });
+
+  it('fixture_12', function(done) {
+    origin_request.wrap_handler(fixture_12, {}, function(na, res) {
+      const headers = Object.keys(res.headers);
+      expect(headers).to.include.members(["location"]);
+      expect(res.headers["location"][0].value).to.equal('/private-example');
+      done();
+    });
+  });
+
+  it('fixture_13', function(done) {
+    origin_request.wrap_handler(fixture_13, {}, function(na, res) {
+      expect(res.uri).to.equal('/not-found.html');
       done();
     });
   });

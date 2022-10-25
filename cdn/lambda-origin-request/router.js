@@ -71,16 +71,14 @@ function redirect(url, cache) {
 }
 
 exports.wrap_handler = async (event, context, callback) => {
+  let res = false;
+
   let log_object = {
-    "time": new Date()
+    "time": new Date(),
+    "is_error": false
   };
 
-  const res = await handler(event);
-
   try {
-    if (!res) {
-      throw 'handler returned false';
-    }
     const cf = event.Records[0].cf;
 
     log_object["config.requestId"] = "requestId" in cf.config ?
@@ -93,21 +91,71 @@ exports.wrap_handler = async (event, context, callback) => {
       cf.request.method : null;
 
     log_object["request.uri"] = "uri" in cf.request ? cf.request.uri : null;
-
-    log_object["res.status"] = "status" in res ? res.status : null;
-
-    log_object["res.headers.location"] = "headers" in res
-      && "location" in res.headers ?
-      res.headers.location[0].value : null;
-
-    log_object["res.uri"] = "uri" in res ? res.uri : null;
-
   } catch (e) {
     log_object["error"] = e;
+    log_object["is_error"] = true;
+  }
+
+  if (!log_object["is_error"]) {
+    res = await handler(event);
+
+    try {
+      if (!res) {
+        throw 'handler returned false';
+      }
+
+      log_object["res.status"] = "status" in res ? res.status : null;
+
+      log_object["res.headers.location"] = "headers" in res
+        && "location" in res.headers ?
+        res.headers.location[0].value : null;
+
+      log_object["res.uri"] = "uri" in res ? res.uri : null;
+
+    } catch (e) {
+      log_object["error"] = e;
+      log_object["is_error"] = true;
+    }
   }
 
   console.log(JSON.stringify(log_object));
   callback(null, res);
+}
+
+function normalise_uri(u) {
+  let norm_uri = "/";
+
+  try {
+    norm_uri = u
+      .toLowerCase()
+      .split("?")[0]
+      .split("#")[0]
+      .replace(/\/+/, '\/');
+
+    if (norm_uri == "" || norm_uri.match(/^\/index.htm/)) {
+      return "/";
+    }
+
+    if (norm_uri.match(/\/index\.html?$/)) {
+      norm_uri = norm_uri.replace("/index.html", "/").replace("/index.htm", "/");
+    }
+
+    if (!norm_uri.match(/\.[a-z]+$/) && !norm_uri.match(/\/$/)) {
+      norm_uri += "/";
+    }
+
+    if (norm_uri.match(/\.html?$/)) {
+      norm_uri = norm_uri.replace(".html", "").replace(".htm", "");
+    }
+
+    if (norm_uri.indexOf(" ") > -1) {
+      norm_uri = encodeURI(norm_uri);
+    }
+  } catch (e) {
+    console.log("normalise_uri error:", e);
+  }
+
+  return norm_uri;
 }
 
 async function handler(event) {
@@ -128,19 +176,7 @@ async function handler(event) {
 
     // ==== normalise the URI ====
 
-    let norm_uri = request.uri
-      .toLowerCase()
-      .split("?")[0]
-      .split("#")[0]
-      .replace(/\/+/, '\/');
-
-    if (norm_uri == "" || norm_uri == "/" || norm_uri.match(/^\/index.htm/)) {
-      request.uri = "/index.html";
-    }
-
-    if (norm_uri.indexOf(" ") > -1) {
-      norm_uri = encodeURI(norm_uri);
-    }
+    let norm_uri = normalise_uri(request.uri);
 
     // ==== normalise the request.headers ====
 
@@ -178,6 +214,10 @@ async function handler(event) {
 
     // ==== routes ====
 
+    if (norm_uri == "/") {
+      request.uri = "/index.html"
+    }
+
     if (request.uri == "/index.html") {
       return request;
     }
@@ -200,7 +240,7 @@ async function handler(event) {
       );
     }
 
-    if (norm_uri.match(/^\/robots.txt$/)) {
+    if (norm_uri.match(/^\/robots.txt/)) {
       return {
           status: 200,
           statusDescription: "OK",
@@ -215,14 +255,14 @@ User-agent: *
     }
 
     if (norm_uri.match(/^\/.well[-_]known/)) {
-      if (norm_uri.match(/^\/.well[-_]known\/teapot$/)) {
+      if (norm_uri.match(/^\/.well[-_]known\/teapot/)) {
         return {
             status: 418,
             statusDescription: "I'm a teapot"
         };
       }
 
-      if (norm_uri.match(/^\/.well[-_]known\/status$/)) {
+      if (norm_uri.match(/^\/.well[-_]known\/status/)) {
         return {
             status: 200,
             statusDescription: "OK",
@@ -230,7 +270,7 @@ User-agent: *
         };
       }
 
-      if (norm_uri.match(/^\/.well[-_]known\/hosting-provider$/)) {
+      if (norm_uri.match(/^\/.well[-_]known\/hosting-provider/)) {
         return {
             status: 200,
             statusDescription: "OK",
@@ -238,15 +278,15 @@ User-agent: *
         };
       }
 
-      if (norm_uri.match(/^(\/.well[-_]known)?\/security\.txt$/)) {
+      if (norm_uri.match(/^(\/.well[-_]known)?\/security\.txt/)) {
         return redirect("https://vulnerability-reporting.service.security.gov.uk/.well-known/security.txt");
       }
     }
 
     const base_url_opt = norm_uri.replace(/\/+$/, "").replace(/.html$/, "");
     const url_options = [
-      base_url_opt,
       base_url_opt + "/index.html",
+      base_url_opt,
       base_url_opt + ".html"
     ];
 
@@ -256,8 +296,9 @@ User-agent: *
       const opt = url_options[i];
       if (opt in routes) {
         // if this is an index.html file, make sure the URI ends with "/" and not index.html
-        if (opt.match(/\/index.html$/) && !norm_uri.match(/\/$/)) {
-          return redirect(opt.substr(0, opt.length - 10));
+        const normopt = normalise_uri(opt);
+        if (normopt != request.uri) {
+          return redirect(normopt);
         }
 
         if ("private" in routes[opt]) {
@@ -275,7 +316,7 @@ User-agent: *
               return request;
 
             } else {
-              return redirect("/api/auth/sign-in?redirect=" + routes[opt].key.replace("/index.html", "/"));
+              return redirect("/api/auth/sign-in?redirect=" + normopt);
             }
           }
         }
