@@ -1,19 +1,14 @@
-locals {
-  nonprod_domain = "nonprod.security.gov.uk"
-  nonprod_tags = {
-    "Service" : "security.gov.uk",
-    "Reference" : "https://github.com/cabinetoffice/security.gov.uk-iac",
-    "Environment" : "nonprod"
-  }
-}
-
 resource "aws_route53_zone" "np-sec-gov-uk" {
   name = local.nonprod_domain
 
-  tags = merge(
-    { "Name" : local.nonprod_domain },
-    local.nonprod_tags
-  )
+  tags = merge(local.default_tags, {
+    "Name" : local.nonprod_domain,
+    "Environment": "nonprod"
+  })
+
+  lifecycle {
+    ignore_changes = [tags]
+  }
 }
 
 data "aws_cloudfront_distribution" "nonprod-cdn" {
@@ -72,7 +67,7 @@ resource "aws_route53_record" "security_txt" {
   zone_id = aws_route53_zone.np-sec-gov-uk.zone_id
   name    = "_security"
   type    = "TXT"
-  ttl     = 1800
+  ttl     = local.standard_ttl
 
   records = [
     "security_policy=https://vulnerability-reporting.service.security.gov.uk/.well-known/security.txt",

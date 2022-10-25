@@ -1,19 +1,14 @@
-locals {
-  domain = "security.gov.uk"
-  prod_tags = {
-    "Service" : "security.gov.uk",
-    "Reference" : "https://github.com/cabinetoffice/security.gov.uk-iac",
-    "Environment" : "prod"
-  }
-}
-
 resource "aws_route53_zone" "sec-gov-uk" {
   name = local.domain
 
-  tags = merge(
-    { "Name" : local.domain },
-    local.prod_tags
-  )
+  tags = merge(local.default_tags, {
+    "Name" : local.domain,
+    "Environment" : "prod"
+  })
+  
+  lifecycle {
+    ignore_changes = [tags]
+  }
 }
 
 resource "aws_route53_record" "a-prod" {
@@ -32,7 +27,7 @@ resource "aws_route53_record" "www-cname-prod" {
   zone_id = aws_route53_zone.sec-gov-uk.zone_id
   name    = "www"
   type    = "CNAME"
-  ttl     = 3600
+  ttl     = local.extra_low_ttl
 
   records = [
     "d1hn3ymz0l9zrk.cloudfront.net"
@@ -43,7 +38,7 @@ resource "aws_route53_record" "root-acm-cert" {
   zone_id = aws_route53_zone.sec-gov-uk.zone_id
   name    = "_20b0a1cfae94ddd400d956a5289fb7d4"
   type    = "CNAME"
-  ttl     = 300
+  ttl     = local.extra_low_ttl
 
   records = [
     "_d4071d469c94f773b7aa93f9bfdaa852.tjxrvlrcqj.acm-validations.aws."
@@ -54,7 +49,7 @@ resource "aws_route53_record" "www-acm-cert" {
   zone_id = aws_route53_zone.sec-gov-uk.zone_id
   name    = "_ecb1bd558ba274319d8d129b737d36e2.www"
   type    = "CNAME"
-  ttl     = 86400
+  ttl     = local.extra_low_ttl
 
   records = [
     "_b73153c9f2ed143e9e7d8efb7f4a263a.lkwmzfhcjn.acm-validations.aws."
@@ -117,7 +112,7 @@ resource "aws_route53_record" "security_txt-prod" {
   zone_id = aws_route53_zone.sec-gov-uk.zone_id
   name    = "_security"
   type    = "TXT"
-  ttl     = 1800
+  ttl     = local.standard_ttl
 
   records = [
     "security_policy=https://vulnerability-reporting.service.security.gov.uk/.well-known/security.txt",

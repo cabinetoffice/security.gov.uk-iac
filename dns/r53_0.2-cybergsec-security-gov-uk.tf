@@ -2,7 +2,7 @@ resource "aws_route53_record" "cybergsec-delegated-zone" {
   zone_id         = aws_route53_zone.sec-gov-uk.zone_id
   allow_overwrite = true
   name            = "cybergsec"
-  ttl             = 3600
+  ttl             = local.standard_ttl
   type            = "NS"
 
   records = [

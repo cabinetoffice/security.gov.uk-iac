@@ -2,7 +2,7 @@ resource "aws_route53_record" "vuln-report-delegated-zone" {
   zone_id         = aws_route53_zone.sec-gov-uk.zone_id
   allow_overwrite = true
   name            = "vulnerability-reporting.service"
-  ttl             = 3600
+  ttl             = local.standard_ttl
   type            = "NS"
 
   records = [
@@ -17,7 +17,7 @@ resource "aws_route53_record" "vuln-scan-delegated-zone" {
   zone_id         = aws_route53_zone.sec-gov-uk.zone_id
   allow_overwrite = true
   name            = "vulnerability-scanning.service"
-  ttl             = 3600
+  ttl             = local.standard_ttl
   type            = "NS"
 
   records = [
@@ -32,7 +32,7 @@ resource "aws_route53_record" "sso-delegated-zone" {
   zone_id         = aws_route53_zone.sec-gov-uk.zone_id
   allow_overwrite = true
   name            = "sso.service"
-  ttl             = 3600
+  ttl             = local.standard_ttl
   type            = "NS"
 
   records = [

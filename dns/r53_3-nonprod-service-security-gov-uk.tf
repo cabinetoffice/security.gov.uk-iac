@@ -2,7 +2,7 @@ resource "aws_route53_record" "vuln-report-nonprod-delegated-zone" {
   zone_id         = aws_route53_zone.sec-gov-uk.zone_id
   allow_overwrite = true
   name            = "vulnerability-reporting.nonprod-service"
-  ttl             = 3600
+  ttl             = local.standard_ttl
   type            = "NS"
 
   records = [
@@ -17,7 +17,7 @@ resource "aws_route53_record" "sso-nonprod-delegated-zone" {
   zone_id         = aws_route53_zone.sec-gov-uk.zone_id
   allow_overwrite = true
   name            = "sso.nonprod-service"
-  ttl             = 3600
+  ttl             = local.standard_ttl
   type            = "NS"
 
   records = [
