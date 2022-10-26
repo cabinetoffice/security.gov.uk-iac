@@ -209,7 +209,7 @@ async function handler(event) {
       "www.nonprod.security.gov.uk",
       "www.security.gov.uk"
     ].includes(host)) {
-      return redirect("https://security.gov.uk");
+      return redirect("https://www.security.gov.uk");
     }
 
     // ==== routes ====
