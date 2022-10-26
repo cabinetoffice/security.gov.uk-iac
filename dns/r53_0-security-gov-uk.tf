@@ -5,7 +5,7 @@ resource "aws_route53_zone" "sec-gov-uk" {
     "Name" : local.domain,
     "Environment" : "prod"
   })
-  
+
   lifecycle {
     ignore_changes = [tags]
   }
@@ -128,7 +128,7 @@ module "aws-r53-parked-domain" {
   email_records          = true  # default
   webserver_records      = false # default
   additional_txt_records = [
-    "google-site-verification=...",
+    "google-site-verification=F0j1biFiYCVlsBKGjA7GxztPNHF2Z3qSJRPMIq1U-jo",
     "security_policy=https://vulnerability-reporting.service.security.gov.uk/.well-known/security.txt"
   ]
 }
