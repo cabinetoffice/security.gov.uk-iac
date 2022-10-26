@@ -1,5 +1,5 @@
 const dotenv = require('dotenv');
-dotenv.config();
+// dotenv.config();
 
 //Require the dev-dependencies
 const chai = require('chai');
@@ -71,7 +71,7 @@ describe('/api', () => {
         if ("OIDC_CONFIGURATION_URL" in process.env) {
 
           let res = await chai.request(server)
-          .get('/api/auth/sign-in?redirect=/private-example.html')
+          .get('/api/auth/sign-in?redirect=/private-example')
           .redirects(0);
 
           expect(res.status).to.equal(302);
@@ -101,7 +101,7 @@ describe('/api', () => {
 
         auth_cookie = res.header["set-cookie"][0].split(";")[0];
 
-        expect(res.header.location).to.equal("/private-example.html");
+        expect(res.header.location).to.equal("/private-example");
       });
     });
 
@@ -121,6 +121,7 @@ describe('/api', () => {
       it('oidc_callback should work', async () => {
         process.env["ALLOWED_IPS"] = "";
         if ("OIDC_CONFIGURATION_URL" in process.env) {
+          console.log("Running...");
 
           let res = await chai.request(server)
           .get('/api/auth/sign-in?redirect=/private-example.html')
@@ -131,13 +132,14 @@ describe('/api', () => {
           const state = /state":"([^"]+)/g.exec(ac)[1];
 
           let res2 = await chai.request(server)
-          .get('/api/auth/oidc_callback?code=60eafc72051e2a715b3ba09fbefca943839ad6c8cc2f14d417fc43bed30a351c&state=' + state)
+          .get('/api/auth/oidc_callback?code=abc&state=' + state)
           .set('cookie', auth_cookie)
           .redirects(0);
 
-          console.log(res2.body);
-
+          console.log(res2);
           expect(res2.status).not.to.equal(200);
+        } else {
+          console.log("Skipping.");
         }
       });
     });

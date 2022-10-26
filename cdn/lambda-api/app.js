@@ -22,6 +22,8 @@ const OIDC_TOKEN_ENDPOINT = process.env['OIDC_TOKEN_ENDPOINT'];
 const OIDC_AUTHORIZATION_ENDPOINT = process.env['OIDC_AUTHORIZATION_ENDPOINT'];
 const OIDC_RESPONSE_TYPE = process.env['OIDC_RESPONSE_TYPE'];
 
+const SESSION_EXPIRY_MINUTES = 20;
+
 global.oidc_configuration = {};
 global.signing_key = "";
 global.http = null;
@@ -157,7 +159,7 @@ app.get('/api/status', (req, res) => {
 app.get('/api/routes', (req, res) => {
   let resp = {};
 
-  const ss = sessionStatus(req);
+  const ss = renewSession(req);
   if ("signed_in" in ss && ss.signed_in) {
     resp = getAllRoutes();
   } else {
@@ -175,7 +177,7 @@ app.get('/api/teapot', (req, res) => {
 });
 
 app.get('/api/auth/status', (req, res) => {
-  let ss = sessionStatus(req);
+  let ss = renewSession(req, res);
   if ("state" in ss) {
     delete ss.state;
   }
@@ -278,10 +280,7 @@ app.get('/api/auth/sign-in', asyncHandler(async (req, res) => {
   if ("redirect" in req.query) {
     let redirect_qs = req.query["redirect"].toLowerCase();
     if (redirect_qs.match(/^\/[^\/\.]/)) {
-      if (redirect_qs.indexOf(" ") > -1) {
-        redirect_qs = encodeURI(redirect_qs);
-      }
-      redirect_url = redirect_qs;
+      redirect_url = normalise_uri(redirect_qs);
     }
   }
 
@@ -416,10 +415,18 @@ function sessionStatus(req) {
   return result;
 }
 
+function renewSession(req, res) {
+  ss = sessionStatus(req);
+  if ("signed_in" in ss && ss.signed_in) {
+    return createSession(res, ss["email"], ss["type"], true, ss["state"], ss["display_name"])
+  }
+
+  return { "signed_in": false, "time": new Date() };
+}
+
 function createSession(res, email, type, signed_in, state=null, display_name=null) {
   const now = new Date();
-  const expiryMinutes = 10;
-  const expiresAt = new Date(+now + (expiryMinutes * 60 * 1000));
+  const expiresAt = new Date(+now + (SESSION_EXPIRY_MINUTES * 60 * 1000));
   const session = {
     "signed_in": signed_in,
     "type": type,
@@ -437,6 +444,8 @@ function createSession(res, email, type, signed_in, state=null, display_name=nul
     sameSite: "lax",
     secure: IS_LAMBDA,
   });
+
+  return session;
 }
 
 function signOut(res) {
@@ -590,6 +599,50 @@ function isAllowedIp(ip) {
   }
 
   return false;
+}
+
+function normalise_uri(u) {
+  let norm_uri = "/";
+
+  if (norm_uri.indexOf("http") == 0) {
+    return norm_uri;
+  }
+
+  if (norm_uri.indexOf("//") == 0) {
+    return norm_uri;
+  }
+
+  try {
+    norm_uri = u
+      .toLowerCase()
+      .split("?")[0]
+      .split("#")[0]
+      .replace(/\/+/, '\/');
+
+    if (norm_uri == "" || norm_uri.match(/^\/index.htm/)) {
+      return "/";
+    }
+
+    if (norm_uri.match(/\/index\.html?$/)) {
+      norm_uri = norm_uri.replace("/index.html", "/").replace("/index.htm", "/");
+    }
+
+    if (!norm_uri.match(/\.[a-z]+$/) && !norm_uri.match(/\/$/)) {
+      norm_uri += "/";
+    }
+
+    if (norm_uri.match(/\.html?$/)) {
+      norm_uri = norm_uri.replace(".html", "").replace(".htm", "");
+    }
+
+    if (norm_uri.indexOf(" ") > -1) {
+      norm_uri = encodeURI(norm_uri);
+    }
+  } catch (e) {
+    console.log("normalise_uri error:", e);
+  }
+
+  return norm_uri;
 }
 
 if (!IS_LAMBDA) {
