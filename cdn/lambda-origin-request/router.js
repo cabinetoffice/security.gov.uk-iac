@@ -254,34 +254,33 @@ User-agent: *
       };
     }
 
-    if (norm_uri.match(/^\/.well[-_]known/)) {
-      if (norm_uri.match(/^\/.well[-_]known\/teapot/)) {
-        return {
-            status: 418,
-            statusDescription: "I'm a teapot"
-        };
-      }
-
-      if (norm_uri.match(/^\/.well[-_]known\/status/)) {
-        return {
-            status: 200,
-            statusDescription: "OK",
-            body: "OK"
-        };
-      }
-
-      if (norm_uri.match(/^\/.well[-_]known\/hosting-provider/)) {
-        return {
-            status: 200,
-            statusDescription: "OK",
-            body: "https://aws.amazon.com/cloudfront/\nhttps://github.com/cabinetoffice/security.gov.uk-iac"
-        };
-      }
-
-      if (norm_uri.match(/^(\/.well[-_]known)?\/security\.txt/)) {
-        return redirect("https://vulnerability-reporting.service.security.gov.uk/.well-known/security.txt");
-      }
+    if (norm_uri.match(/^\/.well[-_]known\/teapot/)) {
+      return {
+          status: 418,
+          statusDescription: "I'm a teapot"
+      };
     }
+
+    if (norm_uri.match(/^\/.well[-_]known\/status/)) {
+      return {
+          status: 200,
+          statusDescription: "OK",
+          body: "OK"
+      };
+    }
+
+    if (norm_uri.match(/^\/.well[-_]known\/hosting-provider/)) {
+      return {
+          status: 200,
+          statusDescription: "OK",
+          body: "https://aws.amazon.com/cloudfront/\nhttps://github.com/cabinetoffice/security.gov.uk-iac"
+      };
+    }
+
+    if (norm_uri.match(/^(\/.well[-_]known)?\/security\.txt/)) {
+      return redirect("https://vulnerability-reporting.service.security.gov.uk/.well-known/security.txt");
+    }
+
 
     const base_url_opt = norm_uri.replace(/\/+$/, "").replace(/.html$/, "");
     const url_options = [
