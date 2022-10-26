@@ -235,7 +235,7 @@ async function handler(event) {
     if (norm_uri.match(/^\/profile/)) {
       return redirect(
         "https://sso." + (
-          host.indexOf("nonprod") == 0 ? "nonprod-" : ""
+          host.indexOf("nonprod") > -1 ? "nonprod-" : ""
         )+"service.security.gov.uk/profile"
       );
     }
