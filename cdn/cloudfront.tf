@@ -105,7 +105,13 @@ resource "aws_cloudfront_function" "viewer_response" {
 # == distribution ==
 
 resource "aws_cloudfront_distribution" "cdn" {
-  depends_on = [aws_acm_certificate.cdn]
+  depends_on   = [aws_acm_certificate.cdn]
+
+  lifecycle {
+    ignore_changes = [
+      http_version
+    ]
+  }
 
   origin {
     domain_name = aws_s3_bucket.cdn_source_bucket.bucket_regional_domain_name
@@ -214,6 +220,6 @@ resource "aws_cloudfront_distribution" "cdn" {
     cloudfront_default_certificate = false
     acm_certificate_arn            = aws_acm_certificate.cdn.arn
     ssl_support_method             = "sni-only"
-    minimum_protocol_version       = "TLSv1.2_2019"
+    minimum_protocol_version       = "TLSv1.2_2021"
   }
 }
