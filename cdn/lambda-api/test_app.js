@@ -88,10 +88,11 @@ describe('/api', () => {
 
     describe('/api/auth/sign-in', () => {
       it('from valid IP, it should sign-in and redirect', async () => {
-        process.env["ALLOWED_IPS"] = "0.0.0.0/0";
+        process.env["ALLOWED_IPS"] = "1.1.1.1/32";
 
         let res = await chai.request(server)
         .get('/api/auth/sign-in?redirect=/private-example.html')
+        .set('true-client-ip', '1.1.1.1')
         .redirects(0);
 
         expect(res.status).to.equal(302);

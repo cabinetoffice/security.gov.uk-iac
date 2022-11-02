@@ -64,22 +64,17 @@ function normaliseEveryRequest(req, res, next) {
     ) ? req.headers[header].value : req.headers[header];
   }
 
-  // set req.ip if req.ip isn't already set
-  let get_ip = true;
-  if ("ip" in req && typeof(req.ip) == "string" && req.ip.length > 0) {
-    get_ip = false;
+  // set req.ip
+  let client_ip;
+  if ('true-client-ip' in norm_headers) {
+    client_ip = norm_headers['true-client-ip'];
+  } else if ('x-forwarded-for' in norm_headers) {
+    client_ip = norm_headers['x-forwarded-for'].split(',')[0].trim();
+  } else {
+    client_ip = req.socket.remoteAddress;
   }
-  if (get_ip) {
-    let client_ip;
-    if ('true-client-ip' in norm_headers) {
-      client_ip = norm_headers['true-client-ip'];
-    } else if ('x-forwarded-for' in norm_headers) {
-      client_ip = norm_headers['x-forwarded-for'].split(',')[0].trim();
-    } else {
-      client_ip = req.socket.remoteAddress;
-    }
-    req.ip = client_ip;
-  }
+  req.ip = client_ip;
+  req.true_ip = client_ip;
 
   // console.log(norm_headers);
 
@@ -132,7 +127,7 @@ app.use((req, res, next) => {
       log_item["event"] = IS_LAMBDA ? event : {
         "hostname": req.hostname,
         "url": req.url,
-        "ip": req.ip,
+        "ip": req.true_ip,
       };
       log_item["context"] = IS_LAMBDA ? context : {"local": true};
       log_item["result"] = {
@@ -185,7 +180,7 @@ app.get('/api/auth/status', (req, res) => {
     log({
       "time": (typeof(req.query.t) != "undefined" && req.query.t.indexOf("-") > 0 ? req.query.t.split("-")[1] : null),
       "action": "signed-in-status",
-      "ip": (typeof(req.ip) != "undefined" ? req.ip : null),
+      "ip": (typeof(req.true_ip) != "undefined" ? req.true_ip : null),
       "email": (typeof(ss.email) != "undefined" ? ss.email : null),
       "domain": desplit.length == 2 ? desplit[1] : null,
       "display_name": (typeof(ss.display_name) != "undefined" ? ss.display_name : null),
@@ -265,7 +260,7 @@ app.get('/api/auth/oidc_callback', asyncHandler(async (req, res) => {
         log({
           "action": "sign-in-success",
           "type": "sso",
-          "ip": (typeof(req.ip) != "undefined" ? req.ip : null),
+          "ip": (typeof(req.true_ip) != "undefined" ? req.true_ip : null),
           "email": (typeof(decoded.email) != "undefined" ? decoded.email : null),
           "domain": desplit.length == 2 ? desplit[1] : null,
           "display_name": dn,
@@ -299,7 +294,7 @@ app.get('/api/auth/sign-in', asyncHandler(async (req, res) => {
   }
 
   if (!signed_in) {
-    const ip_allowed = isAllowedIp(req.ip);
+    const ip_allowed = isAllowedIp(req.true_ip);
     if (ip_allowed) {
       sign_in_type = "ip";
       signed_in = true;
@@ -307,7 +302,7 @@ app.get('/api/auth/sign-in', asyncHandler(async (req, res) => {
     log({
       "action": "sign-in-success",
       "type": "ip",
-      "ip": (typeof(req.ip) != "undefined" ? req.ip : null),
+      "ip": (typeof(req.true_ip) != "undefined" ? req.true_ip : null),
       "email": null,
       "domain": null,
       "display_name": null,
