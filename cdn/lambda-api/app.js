@@ -143,9 +143,7 @@ app.use((req, res, next) => {
     } catch (e) {
       log_item["error"] = e;
     }
-
-    let log_string = redactString(JSON.stringify(log_item));
-    console.log(log_string);
+    log(log_item);
   });
   next();
 });
@@ -180,6 +178,19 @@ app.get('/api/auth/status', (req, res) => {
   let ss = renewSession(req, res);
   if ("state" in ss) {
     delete ss.state;
+  }
+
+  if (ss.signed_in) {
+    const desplit = typeof(ss.email) == "string" ? ss.email.split("@") : [];
+    log({
+      "time": (typeof(req.query.t) != "undefined" && req.query.t.indexOf("-") > 0 ? req.query.t.split("-")[1] : null),
+      "action": "signed-in-status",
+      "ip": (typeof(req.ip) != "undefined" ? req.ip : null),
+      "email": (typeof(ss.email) != "undefined" ? ss.email : null),
+      "domain": desplit.length == 2 ? desplit[1] : null,
+      "display_name": (typeof(ss.display_name) != "undefined" ? ss.display_name : null),
+      "path": (typeof(req.query.p) != "undefined" ? req.query.p : null)
+    });
   }
 
   res.status(200);
@@ -231,7 +242,7 @@ app.get('/api/auth/oidc_callback', asyncHandler(async (req, res) => {
   } else {
     await jwt.verify(id_token, getKey, await function(err, decoded) {
       if (err && typeof(decoded) == "undefined") {
-        console.log("/api/auth/oidc_callback:jwt-invalid:err:", err);
+        log({"/api/auth/oidc_callback": {"error": "jwt-invalid"}});
         res.redirect("/error?e=jwt-invalid");
         return;
       } else if (
@@ -239,7 +250,7 @@ app.get('/api/auth/oidc_callback', asyncHandler(async (req, res) => {
         "email_verified" in decoded &&
         decoded.email_verified
       ) {
-        const dn = "display_name" in decoded ? decoded.display_name : null;
+        const dn = typeof(decoded.display_name) == "string" ? decoded.display_name : null;
         createSession(res, decoded.email, "sso", true, null, dn);
 
         let redirect = "/";
@@ -249,6 +260,17 @@ app.get('/api/auth/oidc_callback', asyncHandler(async (req, res) => {
             redirect = redirect_qs;
           }
         }
+
+        const desplit = typeof(ss.email) == "string" ? decoded.email.split("@") : [];
+        log({
+          "action": "sign-in-success",
+          "type": "sso",
+          "ip": (typeof(req.ip) != "undefined" ? req.ip : null),
+          "email": (typeof(decoded.email) != "undefined" ? decoded.email : null),
+          "domain": desplit.length == 2 ? desplit[1] : null,
+          "display_name": dn,
+          "redirect": redirect
+        });
         res.redirect(redirect);
         return;
       } else {
@@ -269,19 +291,28 @@ app.get('/api/auth/sign-in', asyncHandler(async (req, res) => {
   let email = signed_in ? ss["email"] : null;
   let sign_in_type = signed_in ? ss["type"] : null;
 
+  if ("redirect" in req.query) {
+    let redirect_qs = req.query["redirect"].toLowerCase();
+    if (redirect_qs.match(/^\/[^\/\.]/)) {
+      redirect_url = normalise_uri(redirect_qs);
+    }
+  }
+
   if (!signed_in) {
     const ip_allowed = isAllowedIp(req.ip);
     if (ip_allowed) {
       sign_in_type = "ip";
       signed_in = true;
     }
-  }
-
-  if ("redirect" in req.query) {
-    let redirect_qs = req.query["redirect"].toLowerCase();
-    if (redirect_qs.match(/^\/[^\/\.]/)) {
-      redirect_url = normalise_uri(redirect_qs);
-    }
+    log({
+      "action": "sign-in-success",
+      "type": "ip",
+      "ip": (typeof(req.ip) != "undefined" ? req.ip : null),
+      "email": null,
+      "domain": null,
+      "display_name": null,
+      "redirect": redirect_url
+    });
   }
 
   if (signed_in) {
@@ -326,23 +357,52 @@ app.get('*', (req, res) => {
 });
 
 app.use((err, req, res, next) => {
-  log_item = {
-    "time": new Date(),
+  log({
     "error": err ? (
       typeof(err) == "object" ? {
         "stack": typeof(err["stack"]) == "string" ? err["stack"] : "",
         "message": typeof(err["message"]) == "string" ? err["message"] : "",
       } : err
     ) : null
-  }
-
-  let log_string = redactString(JSON.stringify(log_item));
-  console.log(log_string);
+  });
 
   res.redirect("/error?t=" + Date.now());
 });
 
 // ==== functions ====
+
+function redactString(s) {
+  const redacted_string = "REDACTED";
+  if (IS_LAMBDA) {
+    for (const r of [
+      new RegExp(`(` + COOKIE_NAME + `=)[^;"]+`, "g"),
+      new RegExp(`(state=)[^;"]+`, "g")
+    ]) {
+      s = s.replace(r, "$1"+redacted_string);
+    }
+
+    for (const t of [
+      app.SESSION_SECRET,
+      OIDC_CLIENT_ID,
+      OIDC_CLIENT_SECRET
+    ]) {
+      if (t) {
+        s = s.replace(t, redacted_string);
+      }
+    }
+  }
+  return s;
+}
+
+function log(obj) {
+  if (typeof(obj) != "object") {
+    return;
+  }
+  if (typeof(obj["time"]) == "undefined" || obj["time"] == null) {
+    obj["time"] = new Date();
+  }
+  console.log(redactString(JSON.stringify(obj)));
+}
 
 let _routes = {};
 function getRoutes() {
@@ -351,7 +411,7 @@ function getRoutes() {
       let cm = fs.readFileSync('./content_metadata.json');
       _routes = JSON.parse(cm);
     } catch (e) {
-      console.log("getRoutes error:", e);
+      log({"getRoutes": {"error": e}});
     }
   }
   return _routes;
@@ -408,7 +468,7 @@ function sessionStatus(req) {
       }
     }
   } catch (e) {
-    console.log("session_signed_in:error:", e);
+    log({"sessionStatus": {"error": e}});
   }
 
   result["time"] = new Date();
@@ -540,7 +600,6 @@ async function getUserToken(auth_code) {
 
     const req = (IS_LAMBDA ? https : http).request(options, res => {
       res.on('data', d => {
-        console.log("data:d:". d);
         if (res.statusCode == 200) {
           resolve(JSON.parse(d.toString()));
         } else {
@@ -556,29 +615,6 @@ async function getUserToken(auth_code) {
     req.write(post_data);
     req.end();
   });
-}
-
-function redactString(s) {
-  const redacted_string = "REDACTED";
-  if (false) {
-    for (const r of [
-      new RegExp(`(` + COOKIE_NAME + `=)[^;"]+`, "g"),
-      new RegExp(`(state=)[^;"]+`, "g")
-    ]) {
-      s = s.replace(r, "$1"+redacted_string);
-    }
-
-    for (const t of [
-      app.SESSION_SECRET,
-      OIDC_CLIENT_ID,
-      OIDC_CLIENT_SECRET
-    ]) {
-      if (t) {
-        s = s.replace(t, redacted_string);
-      }
-    }
-  }
-  return s;
 }
 
 function isAllowedIp(ip) {
@@ -639,7 +675,7 @@ function normalise_uri(u) {
       norm_uri = encodeURI(norm_uri);
     }
   } catch (e) {
-    console.log("normalise_uri error:", e);
+    log({"normalise_uri": {"error": e}});
   }
 
   return norm_uri;

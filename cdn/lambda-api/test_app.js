@@ -109,7 +109,7 @@ describe('/api', () => {
       it('it should be signed in with valid cookie (from previous request)', async () => {
 
         let res = await chai.request(server)
-        .get('/api/auth/status')
+        .get('/api/auth/status?t=abc-123&p=/testing/')
         .set('cookie', auth_cookie);
 
         expect(res.status).to.equal(200);
