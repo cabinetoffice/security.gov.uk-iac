@@ -139,7 +139,7 @@ resource "aws_cloudfront_distribution" "cdn" {
   is_ipv6_enabled     = true
   comment             = local.primary_domain
 
-  aliases = terraform.workspace == "prod" ? [] : [local.primary_domain, "www.${local.primary_domain}"]
+  aliases = [local.primary_domain, "www.${local.primary_domain}"]
 
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD"]
