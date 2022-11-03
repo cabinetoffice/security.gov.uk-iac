@@ -254,10 +254,11 @@ User-agent: *
       };
     }
 
-    if (norm_uri.match(/^\/.well[-_]known\/teapot/)) {
+    if (norm_uri.match(/^\/.well[-_]known\/(tea(pot)?|☕|%e2%98%95|coffee)/)) {
       return {
           status: 418,
-          statusDescription: "I'm a teapot"
+          statusDescription: "I'm a teapot",
+          body: "I'm a teapot"
       };
     }
 
@@ -269,7 +270,7 @@ User-agent: *
       };
     }
 
-    if (norm_uri.match(/^\/.well[-_]known\/hosting-provider/)) {
+    if (norm_uri.match(/^\/.well[-_]known\/hosting(-provider)?/)) {
       return {
           status: 200,
           statusDescription: "OK",
