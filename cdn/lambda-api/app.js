@@ -180,6 +180,7 @@ app.get('/api/auth/status', (req, res) => {
     log({
       "time": (typeof(req.query.t) != "undefined" && req.query.t.indexOf("-") > 0 ? req.query.t.split("-")[1] : null),
       "action": "signed-in-status",
+      "type": (typeof(ss.type) != "undefined" ? ss.type : null),
       "ip": (typeof(req.true_ip) != "undefined" ? req.true_ip : null),
       "email": (typeof(ss.email) != "undefined" ? ss.email : null),
       "domain": desplit.length == 2 ? desplit[1] : null,
@@ -298,16 +299,16 @@ app.get('/api/auth/sign-in', asyncHandler(async (req, res) => {
     if (ip_allowed) {
       sign_in_type = "ip";
       signed_in = true;
+      log({
+        "action": "sign-in-success",
+        "type": "ip",
+        "ip": (typeof(req.true_ip) != "undefined" ? req.true_ip : null),
+        "email": null,
+        "domain": null,
+        "display_name": null,
+        "redirect": redirect_url
+      });
     }
-    log({
-      "action": "sign-in-success",
-      "type": "ip",
-      "ip": (typeof(req.true_ip) != "undefined" ? req.true_ip : null),
-      "email": null,
-      "domain": null,
-      "display_name": null,
-      "redirect": redirect_url
-    });
   }
 
   if (signed_in) {
