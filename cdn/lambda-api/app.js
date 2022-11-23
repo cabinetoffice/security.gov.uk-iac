@@ -610,16 +610,13 @@ async function getUserToken(auth_code) {
           log({"getUserToken": {"error": err}});
           resolve({"error": true});
         }
-        let body = Buffer.concat(body).toString();
-        let resd = null;
+        let body = Buffer.concat(chunks).toString();
         try {
-          resd = JSON.parse(body);
+          let resd = JSON.parse(body);
+          resolve(resd);
         } catch (e) {
           log({"getUserToken": {"error": e, "body": body}});
           resolve({"error": true});
-        }
-        if (resd != null) {
-          resolve(resd);
         }
       });
     });
