@@ -601,7 +601,7 @@ async function getUserToken(auth_code) {
           try {
             resd = JSON.parse(d.toString());
           } catch (e) {
-            log({"getUserToken": {"error": e}});
+            log({"getUserToken": {"error": e, "d": d.toString()}});
             resolve({"error": true})
           }
           if (resd != null) {
