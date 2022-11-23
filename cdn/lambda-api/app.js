@@ -597,7 +597,16 @@ async function getUserToken(auth_code) {
     const req = (IS_LAMBDA ? https : http).request(options, res => {
       res.on('data', d => {
         if (res.statusCode == 200) {
-          resolve(JSON.parse(d.toString()));
+          var resd = null;
+          try {
+            resd = JSON.parse(d.toString());
+          } catch (e) {
+            log({"getUserToken": {"error": e}});
+            resolve({"error": true})
+          }
+          if (resd != null) {
+            resolve(resd);
+          }
         } else {
           resolve({"error": true})
         }
