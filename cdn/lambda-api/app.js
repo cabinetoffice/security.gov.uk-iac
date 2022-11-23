@@ -595,20 +595,31 @@ async function getUserToken(auth_code) {
     };
 
     const req = (IS_LAMBDA ? https : http).request(options, res => {
-      res.on('data', d => {
+      let chunks = [];
+      res.on('error', (err) => {
+        log({"getUserToken": {"error": err}});
+        resolve({"error": true});
+      }).on("data", function(chunk) {
         if (res.statusCode == 200) {
-          var resd = null;
-          try {
-            resd = JSON.parse(d.toString());
-          } catch (e) {
-            log({"getUserToken": {"error": e, "d": d.toString()}});
-            resolve({"error": true})
-          }
-          if (resd != null) {
-            resolve(resd);
-          }
+          chunks.push(chunk);
         } else {
-          resolve({"error": true})
+          resolve({"error": true});
+        }
+      }).on('end', err => {
+        if (err) {
+          log({"getUserToken": {"error": err}});
+          resolve({"error": true});
+        }
+        let body = Buffer.concat(body).toString();
+        let resd = null;
+        try {
+          resd = JSON.parse(body);
+        } catch (e) {
+          log({"getUserToken": {"error": e, "body": body}});
+          resolve({"error": true});
+        }
+        if (resd != null) {
+          resolve(resd);
         }
       });
     });
