@@ -17,21 +17,46 @@ resource "aws_route53_record" "a-prod" {
   type    = "A"
 
   alias {
-    name                   = "d2loim61rklw4t.cloudfront.net."
+    name                   = "d1olglap7yrqp9.cloudfront.net."
     zone_id                = "Z2FDTNDATAQYW2"
     evaluate_target_health = false
   }
 }
 
-resource "aws_route53_record" "www-cname-prod" {
+resource "aws_route53_record" "www-a-prod" {
   zone_id = aws_route53_zone.sec-gov-uk.zone_id
   name    = "www"
-  type    = "CNAME"
-  ttl     = local.extra_low_ttl
+  type    = "A"
 
-  records = [
-    "d1hn3ymz0l9zrk.cloudfront.net"
-  ]
+  alias {
+    name                   = "d1olglap7yrqp9.cloudfront.net."
+    zone_id                = "Z2FDTNDATAQYW2"
+    evaluate_target_health = false
+  }
+}
+
+resource "aws_route53_record" "aaaa-prod" {
+  zone_id = aws_route53_zone.sec-gov-uk.zone_id
+  name    = ""
+  type    = "AAAA"
+
+  alias {
+    name                   = "d1olglap7yrqp9.cloudfront.net."
+    zone_id                = "Z2FDTNDATAQYW2"
+    evaluate_target_health = false
+  }
+}
+
+resource "aws_route53_record" "www-aaaa-prod" {
+  zone_id = aws_route53_zone.sec-gov-uk.zone_id
+  name    = "www"
+  type    = "AAAA"
+
+  alias {
+    name                   = "d1olglap7yrqp9.cloudfront.net."
+    zone_id                = "Z2FDTNDATAQYW2"
+    evaluate_target_health = false
+  }
 }
 
 resource "aws_route53_record" "root-acm-cert" {
