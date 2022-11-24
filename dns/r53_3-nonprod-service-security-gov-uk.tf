@@ -27,3 +27,21 @@ resource "aws_route53_record" "sso-nonprod-delegated-zone" {
     "ns-1805.awsdns-33.co.uk.",
   ]
 }
+
+resource "aws_route53_record" "webcaf-nonprod-delegated-zone" {
+  zone_id         = aws_route53_zone.sec-gov-uk.zone_id
+  allow_overwrite = true
+  name            = "webcaf.nonprod-service"
+  ttl             = local.standard_ttl
+  type            = "NS"
+
+  records = [
+    "nns-397.awsdns-49.com.",
+    "ns-2005.awsdns-58.co.uk.",
+    "ns-1490.awsdns-58.org.",
+    "ns-671.awsdns-19.net.",
+  ]
+}
+
+
+	
