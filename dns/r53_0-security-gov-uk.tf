@@ -81,58 +81,6 @@ resource "aws_route53_record" "www-acm-cert" {
   ]
 }
 
-#data "aws_cloudfront_distribution" "cdn-prod" {
-#  id = "..."
-#}
-
-#resource "aws_route53_record" "a-prod" {
-#  zone_id = aws_route53_zone.sec-gov-uk.zone_id
-#  name    = ""
-#  type    = "A"
-#
-#  alias {
-#    name                   = data.aws_cloudfront_distribution.cdn-prod.domain_name
-#    zone_id                = data.aws_cloudfront_distribution.cdn-prod.hosted_zone_id
-#    evaluate_target_health = false
-#  }
-#}
-#
-#resource "aws_route53_record" "aaaa-prod" {
-#  zone_id = aws_route53_zone.sec-gov-uk.zone_id
-#  name    = ""
-#  type    = "AAAA"
-#
-#  alias {
-#    name                   = data.aws_cloudfront_distribution.cdn-prod.domain_name
-#    zone_id                = data.aws_cloudfront_distribution.cdn-prod.hosted_zone_id
-#    evaluate_target_health = false
-#  }
-#}
-#
-#resource "aws_route53_record" "www-a-prod" {
-#  zone_id = aws_route53_zone.sec-gov-uk.zone_id
-#  name    = "www"
-#  type    = "A"
-#
-#  alias {
-#    name                   = data.aws_cloudfront_distribution.cdn-prod.domain_name
-#    zone_id                = data.aws_cloudfront_distribution.cdn-prod.hosted_zone_id
-#    evaluate_target_health = false
-#  }
-#}
-#
-#resource "aws_route53_record" "www-aaaa-prod" {
-#  zone_id = aws_route53_zone.sec-gov-uk.zone_id
-#  name    = "www"
-#  type    = "AAAA"
-#
-#  alias {
-#    name                   = data.aws_cloudfront_distribution.cdn-prod.domain_name
-#    zone_id                = data.aws_cloudfront_distribution.cdn-prod.hosted_zone_id
-#    evaluate_target_health = false
-#  }
-#}
-
 resource "aws_route53_record" "security_txt-prod" {
   zone_id = aws_route53_zone.sec-gov-uk.zone_id
   name    = "_security"
@@ -142,7 +90,6 @@ resource "aws_route53_record" "security_txt-prod" {
   records = [
     "security_policy=https://vulnerability-reporting.service.security.gov.uk/.well-known/security.txt",
     "security_contact=https://vulnerability-reporting.service.security.gov.uk/submit",
-    "security_contact=mailto:vulnerability-reporting@cabinetoffice.gov.uk"
   ]
 }
 
@@ -154,6 +101,7 @@ module "aws-r53-parked-domain" {
   webserver_records      = false # default
   additional_txt_records = [
     "google-site-verification=F0j1biFiYCVlsBKGjA7GxztPNHF2Z3qSJRPMIq1U-jo",
-    "security_policy=https://vulnerability-reporting.service.security.gov.uk/.well-known/security.txt"
+    "security_policy=https://vulnerability-reporting.service.security.gov.uk/.well-known/security.txt",
+    "postman-domain-verification=02fd4f7a688d10eadedea552973d23578fe149fd58df8e081bb28f1371620a75d989fa3707f93a19e1a46a7d93ec502d4a9a07b9514f3fd156f1704b06ffcb28"
   ]
 }
