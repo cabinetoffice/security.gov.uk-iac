@@ -5,7 +5,7 @@ resource "null_resource" "build_or_lambda" {
     content_md_hash = sha256(file("../../security.gov.uk-content/build/content_metadata.json"))
   }
   provisioner "local-exec" {
-    command = "cd lambda-origin-request && build-lambda-origin-request.sh"
+    command = "lambda-origin-request/build-lambda-origin-request.sh"
   }
 }
 
