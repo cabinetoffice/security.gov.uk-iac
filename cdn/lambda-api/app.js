@@ -28,8 +28,8 @@ global.oidc_configuration = {};
 global.signing_key = "";
 global.http = null;
 
-const AWS = require('aws-sdk');
-AWS.config.update({ region: 'eu-west-2' });
+//const AWS = require('aws-sdk');
+//AWS.config.update({ region: 'eu-west-2' });
 
 let COOKIE_NAME = "__Host-Session";
 
