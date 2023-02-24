@@ -21,6 +21,7 @@ const OIDC_JWKS_URI = process.env['OIDC_JWKS_URI'];
 const OIDC_TOKEN_ENDPOINT = process.env['OIDC_TOKEN_ENDPOINT'];
 const OIDC_AUTHORIZATION_ENDPOINT = process.env['OIDC_AUTHORIZATION_ENDPOINT'];
 const OIDC_RESPONSE_TYPE = process.env['OIDC_RESPONSE_TYPE'];
+const OIDC_SIGN_OUT = process.env['OIDC_SIGN_OUT'] || '/';
 
 const SESSION_EXPIRY_MINUTES = 20;
 
@@ -340,7 +341,7 @@ app.get('/api/throw_error', (req, res) => {
 });
 
 app.get('/api/auth/sign-out', (req, res) => {
-  let redirect_url = "/";
+  let redirect_url = OIDC_SIGN_OUT;
 
   signOut(res);
 
