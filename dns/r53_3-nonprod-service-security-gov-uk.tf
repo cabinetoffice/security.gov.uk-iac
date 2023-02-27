@@ -36,10 +36,10 @@ resource "aws_route53_record" "webcaf-nonprod-delegated-zone" {
   type            = "NS"
 
   records = [
-    "nns-397.awsdns-49.com.",
-    "ns-2005.awsdns-58.co.uk.",
-    "ns-1490.awsdns-58.org.",
-    "ns-671.awsdns-19.net.",
+    "ns-1273.awsdns-31.org.",
+    "ns-825.awsdns-39.net.",
+    "ns-1763.awsdns-28.co.uk.",
+    "ns-220.awsdns-27.com."
   ]
 }
 
