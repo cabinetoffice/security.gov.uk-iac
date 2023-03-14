@@ -232,6 +232,10 @@ async function handler(event) {
       return request;
     }
 
+    if (norm_uri.match(/^\/services/)) {
+      return redirect("/organisations/");
+    }
+
     if (norm_uri.match(/^\/profile/)) {
       return redirect(
         "https://sso." + (
