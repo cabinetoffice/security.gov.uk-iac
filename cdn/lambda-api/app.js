@@ -9,6 +9,8 @@ const jwt = require('jsonwebtoken');
 const jwksClient = require('jwks-rsa');
 const { getCurrentInvoke } = require('@vendia/serverless-express')
 
+require('dotenv').config()
+
 const FUNCTION_NAME = process.env['AWS_LAMBDA_FUNCTION_NAME'];
 const IS_LAMBDA = (typeof(FUNCTION_NAME) == "string");
 const LOCAL_PORT = 8002;
@@ -32,14 +34,13 @@ global.http = null;
 //const AWS = require('aws-sdk');
 //AWS.config.update({ region: 'eu-west-2' });
 
-let COOKIE_NAME = "__Host-Session";
+let COOKIE_NAME = IS_LAMBDA ? "__Host-Session" : "SessionSGUKAPI";
 
 const app = express();
 app.ALLOWED_IPS = strToList(process.env['ALLOWED_IPS']);
 
 if (!IS_LAMBDA) {
   app.SESSION_SECRET = "ABC123";
-  COOKIE_NAME = "Session";
   http = require('http');
 } else if (process.env["SESSION_SECRET"].length == 0) {
   return false;
@@ -153,7 +154,7 @@ app.get('/api/status', (req, res) => {
 app.get('/api/routes', (req, res) => {
   let resp = {};
 
-  const ss = renewSession(req);
+  const ss = renewSession(req, res);
   if ("signed_in" in ss && ss.signed_in) {
     resp = getAllRoutes();
   } else {
@@ -493,14 +494,17 @@ function createSession(res, email, type, signed_in, state=null, display_name=nul
     "expiresAt": expiresAt
   };
 
-  res.cookie(COOKIE_NAME, session, {
+  var cookie_object = {
     expires: expiresAt,
     httpOnly: false,
     path: "/",
     signed: true,
     sameSite: "lax",
     secure: IS_LAMBDA,
-  });
+  };
+  if (res) {
+    res.cookie(COOKIE_NAME, session, cookie_object);
+  }
 
   return session;
 }
