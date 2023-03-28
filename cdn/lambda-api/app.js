@@ -425,9 +425,11 @@ function getAllRoutes() {
       _allRoutes[rkey] = {
         "route": rkey,
         "private": route.private,
-        "title": "page_title" in route ? route.page_title : "",
+        "title": "page_title" in route ? route.page_title : rkey,
         "is_file": "file_reference" in route ? route.file_reference : false,
-        "breadcrumbs": "breadcrumbs" in route ? route.breadcrumbs : {}
+        "breadcrumbs": "breadcrumbs" in route ? route.breadcrumbs : {},
+        "description": "description" in route ? route.description : "",
+        "keywords": "keywords" in route ? route.keywords : "",
       }
     }
   }
@@ -445,9 +447,11 @@ function getPublicOnlyRoutes() {
         _publicOnlyRoutes[rkey] = {
           "route": rkey,
           "private": route.private,
-          "title": "page_title" in route ? route.page_title : "",
+          "title": "page_title" in route ? route.page_title : rkey,
           "is_file": "file_reference" in route ? route.file_reference : false,
-          "breadcrumbs": "breadcrumbs" in route ? route.breadcrumbs : {}
+          "breadcrumbs": "breadcrumbs" in route ? route.breadcrumbs : {},
+          "description": "description" in route ? route.description : "",
+          "keywords": "keywords" in route ? route.keywords : "",
         }
       }
     }

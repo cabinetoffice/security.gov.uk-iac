@@ -34,8 +34,15 @@ let routes = {};
 function load_routes() {
   if (!routes_loaded) {
     try {
-      let cm = fs.readFileSync('./content_metadata.json');
-      routes = JSON.parse(cm);
+      const raw_cm = fs.readFileSync('./content_metadata.json');
+      const content_metadata = JSON.parse(raw_cm);
+      for (const rkey in content_metadata) {
+        const route = content_metadata[rkey];
+        routes[rkey] = {
+          "key": route.key,
+          "private": route.private,
+        }
+      }
       routes_loaded = true;
     } catch (e) {
       console.log("load_routes error:", e);
