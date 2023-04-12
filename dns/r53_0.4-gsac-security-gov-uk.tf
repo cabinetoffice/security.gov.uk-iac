@@ -6,9 +6,9 @@ resource "aws_route53_record" "gsac-delegated-zone" {
   type            = "NS"
 
   records = [
-    "ns1.p08.dynect.net.",
-    "ns2.p08.dynect.net.",
-    "ns3.p08.dynect.net.",
-    "ns4.p08.dynect.net.",
+    "ns-707.awsdns-24.net.",
+    "ns-1756.awsdns-27.co.uk.",
+    "ns-1331.awsdns-38.org.",
+    "ns-273.awsdns-34.com.",
   ]
 }

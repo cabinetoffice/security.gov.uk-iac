@@ -6,9 +6,9 @@ resource "aws_route53_record" "cluster2securitysupport-delegated-zone" {
   type            = "NS"
 
   records = [
-    "ns1.p08.dynect.net.",
-    "ns2.p08.dynect.net.",
-    "ns3.p08.dynect.net.",
-    "ns4.p08.dynect.net.",
+    "ns-301.awsdns-37.com.",
+    "ns-1846.awsdns-38.co.uk.",
+    "ns-817.awsdns-38.net.",
+    "ns-1281.awsdns-32.org.",
   ]
 }
