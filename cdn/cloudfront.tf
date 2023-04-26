@@ -185,6 +185,23 @@ resource "aws_cloudfront_distribution" "cdn" {
   }
 
   ordered_cache_behavior {
+    path_pattern     = "/sitemap.txt"
+    allowed_methods  = ["GET", "HEAD", "OPTIONS"]
+    cached_methods   = ["GET", "HEAD", "OPTIONS"]
+    target_origin_id = local.s3_origin_id
+
+    cache_policy_id          = data.aws_cloudfront_cache_policy.caching_enabled.id
+    origin_request_policy_id = data.aws_cloudfront_origin_request_policy.s3_for_caching.id
+    compress                 = true
+    viewer_protocol_policy   = "redirect-to-https"
+
+    function_association {
+      event_type   = "viewer-response"
+      function_arn = aws_cloudfront_function.viewer_response.arn
+    }
+  }
+
+  ordered_cache_behavior {
     path_pattern     = "/api/*"
     allowed_methods  = ["HEAD", "DELETE", "POST", "GET", "OPTIONS", "PUT", "PATCH"]
     cached_methods   = ["HEAD", "GET"]
