@@ -42,3 +42,19 @@ resource "aws_route53_record" "sso-delegated-zone" {
     "ns-958.awsdns-55.net.",
   ]
 }
+
+
+resource "aws_route53_record" "webcaf-delegated-zone" {
+  zone_id         = aws_route53_zone.sec-gov-uk.zone_id
+  allow_overwrite = true
+  name            = "webcaf.service"
+  ttl             = local.standard_ttl
+  type            = "NS"
+
+  records = [
+    "ns-715.awsdns-25.net.",
+    "ns-448.awsdns-56.com.",
+    "ns-2030.awsdns-61.co.uk.",
+    "ns-1420.awsdns-49.org.",
+  ]
+}
