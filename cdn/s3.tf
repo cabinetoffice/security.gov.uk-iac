@@ -45,17 +45,33 @@ resource "aws_s3_bucket" "cdn_logging" {
   tags   = { "Name" : "${local.primary_domain}-cloudfront-logging" }
 }
 
+resource "aws_s3_bucket_ownership_controls" "cdn_logging" {
+  bucket = aws_s3_bucket.cdn_logging.id
+  rule {
+    object_ownership = "BucketOwnerPreferred"
+  }
+}
+
 resource "aws_s3_bucket_acl" "cdn_logging" {
   bucket = aws_s3_bucket.cdn_logging.id
+  acl    = "log-delivery-write"
   
   access_control_policy {
     owner {
       id = data.aws_canonical_user_id.current.id
     }
-    
+
     grant {
       grantee {
         id   = data.aws_cloudfront_log_delivery_canonical_user_id.cfuid.id
+        type = "CanonicalUser"
+      }
+      permission = "FULL_CONTROL"
+    }
+
+    grant {
+      grantee {
+        id   = data.aws_canonical_user_id.current.id
         type = "CanonicalUser"
       }
       permission = "FULL_CONTROL"
