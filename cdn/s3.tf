@@ -37,6 +37,7 @@ locals {
 
 # === CDN Logging ===
 
+data "aws_canonical_user_id" "current" {}
 data "aws_cloudfront_log_delivery_canonical_user_id" "cfuid" {} 
 
 resource "aws_s3_bucket" "cdn_logging" {
@@ -47,6 +48,10 @@ resource "aws_s3_bucket" "cdn_logging" {
 resource "aws_s3_bucket_acl" "cdn_logging" {
   bucket = aws_s3_bucket.cdn_logging.id
 
+  owner {
+    id = data.aws_canonical_user_id.current.id
+  }
+  
   access_control_policy {
     grant {
       grantee {
