@@ -131,7 +131,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 
   logging_config {
     include_cookies = false
-    bucket          = "${local.primary_domain}-cloudfront-logging.s3.amazonaws.com"
+    bucket          = aws_s3_bucket.cdn_logging.bucket_domain_name
     prefix          = terraform.workspace
   }
   
