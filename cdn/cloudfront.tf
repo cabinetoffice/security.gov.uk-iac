@@ -107,12 +107,6 @@ resource "aws_cloudfront_function" "viewer_response" {
 resource "aws_cloudfront_distribution" "cdn" {
   depends_on   = [aws_acm_certificate.cdn]
 
-  lifecycle {
-    ignore_changes = [
-      http_version
-    ]
-  }
-
   origin {
     domain_name = aws_s3_bucket.cdn_source_bucket.bucket_regional_domain_name
     origin_id   = local.s3_origin_id
