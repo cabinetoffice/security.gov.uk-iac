@@ -54,7 +54,7 @@ resource "aws_iam_role" "origin_request_lambda_role" {
 
 resource "aws_cloudwatch_log_group" "origin_request_lambda_lg" {
   name              = "/aws/lambda/us-east-1.${local.origin_request_lambda_name}"
-  retention_in_days = 14
+  retention_in_days = terraform.workspace == "prod" ? 365 : 14
 }
 
 # See also the following AWS managed policy: AWSLambdaBasicExecutionRole

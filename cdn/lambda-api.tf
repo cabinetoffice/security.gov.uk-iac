@@ -59,7 +59,7 @@ resource "aws_iam_role" "api_lambda_role" {
 
 resource "aws_cloudwatch_log_group" "api_lambda_lg" {
   name              = "/aws/lambda/${local.api_lambda_name}"
-  retention_in_days = 14
+  retention_in_days = terraform.workspace == "prod" ? 365 : 14
 }
 
 resource "aws_kms_key" "lambda_api_env_vars" {
