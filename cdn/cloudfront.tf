@@ -135,6 +135,13 @@ resource "aws_cloudfront_distribution" "cdn" {
     }
   }
 
+  logging_config {
+    include_cookies = false
+    bucket          = "${local.primary_domain}-cloudfront-logging.s3.amazonaws.com"
+    prefix          = terraform.workspace
+  }
+  
+  http_version        = "http2and3"
   enabled             = true
   is_ipv6_enabled     = true
   comment             = local.primary_domain
