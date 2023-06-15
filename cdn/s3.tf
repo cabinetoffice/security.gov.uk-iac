@@ -34,3 +34,27 @@ locals {
   current_time = timestamp()
   three_months = timeadd(local.current_time, "2160h")
 }
+
+# === CDN Logging ===
+
+data "aws_cloudfront_log_delivery_canonical_user_id" "cfuid" {} 
+
+resource "aws_s3_bucket" "cdn_logging" {
+  bucket = "${local.primary_domain}-cloudfront-logging"
+  region = "eu-west-2"
+  tags   = { "Name" : "${local.primary_domain}-cloudfront-logging" }
+}
+
+resource "aws_s3_bucket_acl" "cdn_logging" {
+  bucket = aws_s3_bucket.cdn_logging.id
+
+  access_control_policy {
+    grant {
+      grantee {
+        id   = data.aws_cloudfront_log_delivery_canonical_user_id.cfuid.id
+        type = "CanonicalUser"
+      }
+      permission = "FULL_CONTROL"
+    }
+  }
+}
