@@ -271,6 +271,14 @@ User-agent: *
       };
     }
 
+    if (norm_uri.match(/^\/.well[-_]known\/microsoft-identity-association\.json/)) {
+      return {
+          status: 200,
+          statusDescription: "OK",
+          body: '{"associatedApplications": [{"applicationId": "5e617ec7-ca54-4a64-8f66-2e11ec52d9e3"}]}'
+      };
+    }
+
     if (norm_uri.match(/^\/.well[-_]known\/status/)) {
       return {
           status: 200,
