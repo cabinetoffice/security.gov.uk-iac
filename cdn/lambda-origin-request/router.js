@@ -275,7 +275,7 @@ User-agent: *
       return {
           status: 200,
           statusDescription: "OK",
-          body: '{"associatedApplications": [{"applicationId": "5e617ec7-ca54-4a64-8f66-2e11ec52d9e3"}]}'
+          body: '{"associatedApplications": [{"applicationId": "947d4106-d917-43b9-9af6-f2707f038536"}]}'
       };
     }
 
