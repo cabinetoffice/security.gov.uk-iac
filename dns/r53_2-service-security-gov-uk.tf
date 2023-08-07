@@ -43,6 +43,21 @@ resource "aws_route53_record" "sso-delegated-zone" {
   ]
 }
 
+# GC3:
+resource "aws_route53_record" "internet-listener-delegated-zone" {
+  zone_id         = aws_route53_zone.sec-gov-uk.zone_id
+  allow_overwrite = true
+  name            = "ad61b93ac2c54be4a5320e9d32a3daad.service"
+  ttl             = local.standard_ttl
+  type            = "NS"
+
+  records = [
+    "ns-703.awsdns-23.net.",
+    "ns-1257.awsdns-29.org.",
+    "ns-1728.awsdns-24.co.uk.",
+    "ns-323.awsdns-40.com.",
+  ]
+}
 
 resource "aws_route53_record" "webcaf-delegated-zone" {
   zone_id         = aws_route53_zone.sec-gov-uk.zone_id
