@@ -25,7 +25,7 @@ resource "aws_cloudfront_origin_request_policy" "custom_lae_s3_origin" {
   cookies_config {
     cookie_behavior = "whitelist"
     cookies {
-      items = ["__Host-Session", "__host-session"]
+      items = ["__Host-Session-SGUK", "__host-session-sguk"]
     }
   }
   headers_config {
