@@ -90,7 +90,7 @@ resource "aws_cloudfront_function" "viewer_request" {
   runtime = "cloudfront-js-1.0"
   comment = "viewer-request-${terraform.workspace}"
   publish = true
-  code    = file("function-viewer-request/index.min.js")
+  code    = file("function-viewer-request/index.js")
 }
 
 // all viewer responses to set the security headers
@@ -99,7 +99,7 @@ resource "aws_cloudfront_function" "viewer_response" {
   runtime = "cloudfront-js-1.0"
   comment = "viewer-response-${terraform.workspace}"
   publish = true
-  code    = file("function-viewer-response/index.min.js")
+  code    = file("function-viewer-response/index.js")
 }
 
 # == distribution ==
