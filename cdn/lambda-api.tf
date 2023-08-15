@@ -33,10 +33,10 @@ resource "aws_lambda_function" "api_lambda" {
   function_name    = local.api_lambda_name
   role             = aws_iam_role.api_lambda_role.arn
   handler          = "lambda.handler"
-  runtime          = "nodejs16.x"
+  runtime          = "nodejs18.x"
 
-  memory_size = 256
-  timeout     = 15
+  memory_size = 384
+  timeout     = 30
   publish     = true
 
   lifecycle {

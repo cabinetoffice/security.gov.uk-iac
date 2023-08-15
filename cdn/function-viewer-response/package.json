@@ -1,8 +1,8 @@
 {
   "devDependencies": {
-    "chai": "^4.3.4",
-    "minify": "^9.1.0",
-    "mocha": "^8.3.2"
+    "chai": "^4.3.7",
+    "minify": "^10.3.0",
+    "mocha": "^10.2.0"
   },
   "scripts": {
     "test": "minify index.js > index.min.js && mocha --reporter spec 'test_*.js'",

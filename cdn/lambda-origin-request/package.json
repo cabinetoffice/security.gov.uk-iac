@@ -1,7 +1,7 @@
 {
   "devDependencies": {
-    "chai": "^4.3.4",
-    "mocha": "^8.3.2"
+    "chai": "^4.3.7",
+    "mocha": "^10.2.0"
   },
   "scripts": {
     "test": "mocha --reporter spec 'test_*.js'"
@@ -16,11 +16,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/co-cddo/security.gov.uk.git"
+    "url": "git+https://github.com/cabinetoffice/security.gov.uk-iac.git"
   },
   "bugs": {
-    "url": "https://github.com/co-cddo/security.gov.uk/issues"
+    "url": "https://github.com/cabinetoffice/security.gov.uk-iac/issues"
   },
-  "homepage": "https://github.com/co-cddo/security.gov.uk",
+  "homepage": "https://github.com/cabinetoffice/security.gov.uk-iac",
   "description": ""
 }

@@ -41,9 +41,11 @@ function handler(event) {
       headers['expect-ct'] = { value: "max-age=0" };
     }
 
+    /*
+    // generate in html meta tag!
     if (!currentHeaderKeys.includes('content-security-policy')) {
-      headers['content-security-policy'] = { value: "default-src 'self' https://nonprod.security.gov.uk https://security.gov.uk; frame-src 'self' https://www.youtube-nocookie.com/ https://player.vimeo.com/;" };
-    }
+      headers['content-security-policy'] = { value: "base-uri 'self'; object-src 'none'; font-src 'self'; img-src 'self'; script-src 'nonce-gfe-3b2dd955e1e4' 'nonce-main-a7c25231c899' 'nonce-search-760e790e4076'; style-src 'self'; frame-src https://www.youtube-nocookie.com/ https://player.vimeo.com/;" };
+    }*/
 
     if (!currentHeaderKeys.includes('x-content-type-options')) {
       headers['x-content-type-options'] = { value: "nosniff" };
@@ -57,31 +59,8 @@ function handler(event) {
       headers['referrer-policy'] = { value: "strict-origin-when-cross-origin" };
     }
 
-    var perms = [
-      ["geolocation", null],
-      ["microphone", null],
-      ["camera", null],
-      ["payment", null],
-      ["xr-spatial-tracking", null],
-      ["magnetometer", null],
-      ["payment", null],
-      ["sync-xhr", "'self'"],
-    ];
-
     if (!currentHeaderKeys.includes('permissions-policy')) {
-      headers['permissions-policy'] = {
-        // format: feature1=(sources), feature2=(sources)
-        value: perms.map(p => p[0] + "=(" + (
-          p[1] == null ? "" : p[1].replace("'self'", "self")
-        ) + ")").join(", ")
-      };
-    }
-
-    if (!currentHeaderKeys.includes('feature-policy')) {
-      headers['feature-policy'] = {
-        // format: feature1 sources; feature2 sources;
-        value: perms.map(p => p[0] + " " + (p[1] == null ? "'none'" : p[1])).join("; ")
-      };
+      headers['permissions-policy'] = { value: "geolocation=(), microphone=(), camera=(), payment=(), xr-spatial-tracking=(), magnetometer=(), payment=(), sync-xhr=(self)" };
     }
 
     if (!currentHeaderKeys.includes('cross-origin-embedder-policy')) {

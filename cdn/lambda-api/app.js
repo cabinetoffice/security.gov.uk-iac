@@ -12,6 +12,7 @@ const { getCurrentInvoke } = require('@vendia/serverless-express')
 require('dotenv').config()
 
 const FUNCTION_NAME = process.env['AWS_LAMBDA_FUNCTION_NAME'];
+const ENVIRONMENT = process.env['ENVIRONMENT'] || 'dev';
 const IS_LAMBDA = (typeof(FUNCTION_NAME) == "string");
 const LOCAL_PORT = 8002;
 
@@ -34,7 +35,8 @@ global.http = null;
 //const AWS = require('aws-sdk');
 //AWS.config.update({ region: 'eu-west-2' });
 
-let COOKIE_NAME = IS_LAMBDA ? "__Host-Session" : "SessionSGUKAPI";
+let COOKIE_NAME = IS_LAMBDA ? "__Host-Session-SGUK" : "Session-SGUK";
+let COOKIE_HTTPONLY = ENVIRONMENT == "prod" ? false : true;
 
 const app = express();
 app.ALLOWED_IPS = strToList(process.env['ALLOWED_IPS']);
@@ -500,7 +502,7 @@ function createSession(res, email, type, signed_in, state=null, display_name=nul
 
   var cookie_object = {
     expires: expiresAt,
-    httpOnly: false,
+    httpOnly: COOKIE_HTTPONLY,
     path: "/",
     signed: true,
     sameSite: "lax",
@@ -517,7 +519,7 @@ function signOut(res) {
   const now = new Date();
   res.cookie(COOKIE_NAME, "", {
     expires: now,
-    httpOnly: false,
+    httpOnly: COOKIE_HTTPONLY,
     path: "/",
     signed: true,
     sameSite: "lax",
