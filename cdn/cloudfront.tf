@@ -58,8 +58,8 @@ resource "aws_cloudfront_origin_request_policy" "api_origin" {
     cookie_behavior = "whitelist"
     cookies {
       items = [
-        "__Host-Session",
-        "__host-session",
+        "__Host-Session-SGUK",
+        "__host-session-sguk",
       ]
     }
   }
