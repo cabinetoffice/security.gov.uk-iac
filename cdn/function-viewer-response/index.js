@@ -11,6 +11,7 @@ function handler(event) {
 
     var uri = typeof(event.request) == "undefined" ||
               typeof(event.request.uri) == "undefined" ? "/" : event.request.uri;
+    
     var to_cache = false;
     if (uri.indexOf("/assets/") == 0) {
       to_cache = true;
@@ -27,11 +28,9 @@ function handler(event) {
         delete headers['x-powered-by'];
     }
 
-    if (!currentHeaderKeys.includes('cache-control')) {
-      headers['cache-control'] = {
-        value: to_cache ? "public, max-age=3600, immutable" : "private, no-store"
-      };
-    }
+    headers['cache-control'] = {
+      value: to_cache ? "public, max-age=3600, immutable" : "no-store, private, max-age=0"
+    };
 
     if (!currentHeaderKeys.includes('strict-transport-security')) {
       headers['strict-transport-security'] = { value: "max-age=31536000; includeSubdomains; preload" };
