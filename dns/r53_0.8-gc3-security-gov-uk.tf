@@ -13,14 +13,15 @@ resource "aws_route53_record" "gc3-delegated-zone" {
   ]
 }
 
-#resource "aws_route53_record" "gccc-ds" {
-#  zone_id         = aws_route53_zone.sec-gov-uk.zone_id
-#  allow_overwrite = true
-#  name            = "gc3"
-#  ttl             = local.standard_ttl
-#  type            = "DS"
 
-#  records = [
-#    "16448 13 2 xxx"
-#  ]
-#}
+resource "aws_route53_record" "gc3-ds" {
+  zone_id         = aws_route53_zone.sec-gov-uk.zone_id
+  allow_overwrite = true
+  name            = "gc3"
+  ttl             = local.standard_ttl
+  type            = "DS"
+
+  records = [
+    "40425 13 2 B2E93D0CB4E0F345B0580AAEC8CE6825144A813FCB539C483C82B9F747F4CC5B"
+  ]
+}
