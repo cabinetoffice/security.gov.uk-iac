@@ -1,7 +1,8 @@
-const expect         = require("chai").expect;
-const viewer_request = require("./index.js");
+import chai from 'chai';
+const expect = chai.expect;
+import handler from "./index.js";
 
-fixture_1 = {
+const fixture_1 = {
   "version": "1.0",
   "context": {
     "distributionDomainName": "d111111abcdef8.cloudfront.net",
@@ -146,20 +147,18 @@ fixture_1 = {
   }
 }
 
-describe("viewer_request", function() {
+describe("handler", function() {
   it('fixture_1', function(done) {
-    var req = viewer_request(fixture_1);
+    var res = handler(fixture_1);
 
-    const headers = Object.keys(req["headers"]);
+    const headers = Object.keys(res["headers"]);
 
-    expect(headers).to.include('true-client-ip');
-    expect(req.headers['true-client-ip'].value).to.equal('198.51.100.11');
-
-    expect(headers).to.include('true-host');
-    expect(req.headers['true-host'].value).to.equal('video.example.com');
-
-    expect(headers).to.include('true-user-agent');
-    expect(req.headers['true-user-agent'].value).to.equal('Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:83.0) Gecko/20100101 Firefox/83.0');
+    expect(headers).to.not.include('content-security-policy-report-only');
+    expect(headers).to.not.include('server');
+    expect(headers).to.include('x-frame-options');
+    
+    expect(headers).to.include('cache-control');
+    expect(res["headers"]["cache-control"].value).to.equal("no-store, private, max-age=0");
 
     done();
   });

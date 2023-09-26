@@ -4,7 +4,7 @@
     "mocha": "^10.2.0"
   },
   "scripts": {
-    "test": "mocha --reporter spec 'test_*.js'"
+    "test": "mocha --reporter spec 'test_*.mjs'"
   },
   "name": "index",
   "version": "1.0.0",
