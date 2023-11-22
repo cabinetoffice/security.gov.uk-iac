@@ -13,6 +13,18 @@ resource "aws_route53_record" "vuln-report-nonprod-delegated-zone" {
   ]
 }
 
+resource "aws_route53_record" "vrs-np-ds" {
+  zone_id         = aws_route53_zone.sec-gov-uk.zone_id
+  allow_overwrite = true
+  name            = "vulnerability-reporting.nonprod-service"
+  ttl             = local.standard_ttl
+  type            = "DS"
+
+  records = [
+    "37860 13 2 069F6F1739BDAE469A33EEEFCCDCAE32410D594FD67F17534F111E37F941585D"
+  ]
+}
+
 resource "aws_route53_record" "sso-nonprod-delegated-zone" {
   zone_id         = aws_route53_zone.sec-gov-uk.zone_id
   allow_overwrite = true
