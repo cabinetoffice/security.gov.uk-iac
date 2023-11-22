@@ -13,7 +13,7 @@ resource "aws_route53_record" "vuln-report-delegated-zone" {
   ]
 }
 
-resource "aws_route53_record" "gc3-ds" {
+resource "aws_route53_record" "vrs-prod-ds" {
   zone_id         = aws_route53_zone.sec-gov-uk.zone_id
   allow_overwrite = true
   name            = "vulnerability-reporting.service"
