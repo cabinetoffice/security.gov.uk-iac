@@ -13,6 +13,18 @@ resource "aws_route53_record" "vuln-report-delegated-zone" {
   ]
 }
 
+resource "aws_route53_record" "gc3-ds" {
+  zone_id         = aws_route53_zone.sec-gov-uk.zone_id
+  allow_overwrite = true
+  name            = "vulnerability-reporting.service"
+  ttl             = local.standard_ttl
+  type            = "DS"
+
+  records = [
+    "37860 13 2 2B28EA32FA36024F07E92A7471EB42B389F0DF6447BC71FED0F2125628F7867F"
+  ]
+}
+
 resource "aws_route53_record" "vuln-scan-delegated-zone" {
   zone_id         = aws_route53_zone.sec-gov-uk.zone_id
   allow_overwrite = true
