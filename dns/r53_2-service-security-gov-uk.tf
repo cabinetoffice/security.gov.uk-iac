@@ -85,3 +85,15 @@ resource "aws_route53_record" "webcaf-delegated-zone" {
     "ns-1420.awsdns-49.org.",
   ]
 }
+
+resource "aws_route53_record" "webcaf-ds" {
+  zone_id         = aws_route53_zone.sec-gov-uk.zone_id
+  allow_overwrite = true
+  name            = "webcaf.service"
+  ttl             = local.standard_ttl
+  type            = "DS"
+
+  records = [
+    "29233 13 2 AED8C8671A3829923964BC4CD956CD4641963B768504F13C082D0A34586764F3"
+  ]
+}
