@@ -46,6 +46,10 @@ function handler(event) {
       headers['content-security-policy'] = { value: "base-uri 'self'; object-src 'none'; font-src 'self'; img-src 'self'; script-src 'nonce-gfe-3b2dd955e1e4' 'nonce-main-a7c25231c899' 'nonce-search-760e790e4076'; style-src 'self'; frame-src https://www.youtube-nocookie.com/ https://player.vimeo.com/;" };
     }*/
 
+    if (!currentHeaderKeys.includes('report-to')) {
+      headers['report-to'] = { value: '{"group": "primary", "max_age": 86400, "endpoints": [{ "url": "https://csp1.ingest.service.security.gov.uk/security.gov.uk/report" }]}' };
+    }
+
     if (!currentHeaderKeys.includes('x-content-type-options')) {
       headers['x-content-type-options'] = { value: "nosniff" };
     }
