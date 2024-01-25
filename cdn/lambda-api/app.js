@@ -254,10 +254,12 @@ app.get('/api/auth/oidc_callback', asyncHandler(async (req, res) => {
         createSession(res, decoded.email, "sso", true, null, dn);
 
         let redirect = "/";
-        if ("redirect" in ss) {
-          if (ss["redirect"].match(/^\/[^\/\.]/)) {
-            redirect = normalise_uri(ss["redirect"]);
-          }
+        if (
+          "redirect" in ss
+          && ss["redirect"] != null
+          && ss["redirect"].match(/^\/[^\/\.]/)
+        ) {
+          redirect = normalise_uri(ss["redirect"]);
         } else if ("redirect" in req.query) {
           const redirect_qs = req.query["redirect"];
           if (redirect_qs.match(/^\/[^\/\.]/)) {
@@ -295,7 +297,13 @@ app.get('/api/auth/sign-in', asyncHandler(async (req, res) => {
   let email = signed_in ? ss["email"] : null;
   let sign_in_type = signed_in ? ss["type"] : null;
 
-  if ("redirect" in req.query) {
+  if (
+    "redirect" in ss
+    && ss["redirect"] != null
+    && ss["redirect"].match(/^\/[^\/\.]/)
+  ) {
+    redirect_url = normalise_uri(ss["redirect"]);
+  } else if ("redirect" in req.query) {
     let redirect_qs = req.query["redirect"].toLowerCase();
     if (redirect_qs.match(/^\/[^\/\.]/)) {
       redirect_url = normalise_uri(redirect_qs);
