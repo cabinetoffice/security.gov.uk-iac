@@ -13,7 +13,7 @@ require('dotenv').config()
 
 const FUNCTION_NAME = process.env['AWS_LAMBDA_FUNCTION_NAME'];
 const ENVIRONMENT = process.env['ENVIRONMENT'] || 'dev';
-const IS_LAMBDA = (typeof(FUNCTION_NAME) == "string");
+const IS_LAMBDA = (typeof (FUNCTION_NAME) == "string");
 const LOCAL_PORT = 8002;
 
 const URL_HOST = process.env['URL_HOST'];
@@ -64,7 +64,7 @@ function normaliseEveryRequest(req, res, next) {
   let norm_headers = {};
   for (header in req.headers) {
     norm_headers[header.toLowerCase()] = (
-      typeof(req.headers[header]) != "string"
+      typeof (req.headers[header]) != "string"
     ) ? req.headers[header].value : req.headers[header];
   }
 
@@ -84,11 +84,11 @@ function normaliseEveryRequest(req, res, next) {
 
   let host = '';
   if ('true-host' in norm_headers) {
-      host = norm_headers['true-host'];
+    host = norm_headers['true-host'];
   } else if ('host' in norm_headers) {
-      host = norm_headers['host'];
+    host = norm_headers['host'];
   } else if (':authority' in norm_headers) {
-      host = norm_headers[':authority'];
+    host = norm_headers[':authority'];
   }
   host = host.split(":")[0];
   req.headers["host"] = host;
@@ -122,7 +122,7 @@ app.use(normaliseEveryRequest);
 // ==== routes ====
 
 app.use((req, res, next) => {
-  res.on('finish', function() {
+  res.on('finish', function () {
     log_item = {
       "time": new Date()
     }
@@ -133,11 +133,11 @@ app.use((req, res, next) => {
         "url": req.url,
         "ip": req.true_ip,
       };
-      log_item["context"] = IS_LAMBDA ? context : {"local": true};
+      log_item["context"] = IS_LAMBDA ? context : { "local": true };
       log_item["result"] = {
         "headers": res.getHeaders(),
-        "statusCode": typeof(res.statusCode) != "undefined" ? res.statusCode : 0,
-        "statusMessage": typeof(res.statusMessage) != "undefined" ? res.statusMessage : "UNKNOWN",
+        "statusCode": typeof (res.statusCode) != "undefined" ? res.statusCode : 0,
+        "statusMessage": typeof (res.statusMessage) != "undefined" ? res.statusMessage : "UNKNOWN",
       };
     } catch (e) {
       log_item["error"] = e;
@@ -180,16 +180,16 @@ app.get('/api/auth/status', (req, res) => {
   }
 
   if (ss.signed_in) {
-    const desplit = typeof(ss.email) == "string" ? ss.email.split("@") : [];
+    const desplit = typeof (ss.email) == "string" ? ss.email.split("@") : [];
     log({
-      "time": (typeof(req.query.t) != "undefined" && req.query.t.indexOf("-") > 0 ? req.query.t.split("-")[1] : null),
+      "time": (typeof (req.query.t) != "undefined" && req.query.t.indexOf("-") > 0 ? req.query.t.split("-")[1] : null),
       "action": "signed-in-status",
-      "type": (typeof(ss.type) != "undefined" ? ss.type : null),
-      "ip": (typeof(req.true_ip) != "undefined" ? req.true_ip : null),
-      "email": (typeof(ss.email) != "undefined" ? ss.email : null),
+      "type": (typeof (ss.type) != "undefined" ? ss.type : null),
+      "ip": (typeof (req.true_ip) != "undefined" ? req.true_ip : null),
+      "email": (typeof (ss.email) != "undefined" ? ss.email : null),
       "domain": desplit.length == 2 ? desplit[1] : null,
-      "display_name": (typeof(ss.display_name) != "undefined" ? ss.display_name : null),
-      "path": (typeof(req.query.p) != "undefined" ? req.query.p : null)
+      "display_name": (typeof (ss.display_name) != "undefined" ? ss.display_name : null),
+      "path": (typeof (req.query.p) != "undefined" ? req.query.p : null)
     });
   }
 
@@ -202,7 +202,7 @@ app.get('/api/auth/oidc_callback', asyncHandler(async (req, res) => {
   const ss = sessionStatus(req);
 
   let saved_state = null;
-  if ("state" in ss && ss["state"].length > 0)  {
+  if ("state" in ss && ss["state"].length > 0) {
     saved_state = ss["state"];
   }
   if (saved_state == null) {
@@ -226,7 +226,7 @@ app.get('/api/auth/oidc_callback', asyncHandler(async (req, res) => {
   } else if ("code" in req.query) {
     const token_endpoint_resp = await getUserToken(req.query["code"]);
     if (token_endpoint_resp && "id_token" in token_endpoint_resp) {
-        id_token = token_endpoint_resp.id_token;
+      id_token = token_endpoint_resp.id_token;
     } else {
       res.redirect("/error?e=getusertoken-failed");
       return;
@@ -240,9 +240,9 @@ app.get('/api/auth/oidc_callback', asyncHandler(async (req, res) => {
     res.redirect("/error?e=jwt-id_token-missing");
     return;
   } else {
-    await jwt.verify(id_token, getKey, await function(err, decoded) {
-      if (err && typeof(decoded) == "undefined") {
-        log({"/api/auth/oidc_callback": {"error": "jwt-invalid"}});
+    await jwt.verify(id_token, getKey, await function (err, decoded) {
+      if (err && typeof (decoded) == "undefined") {
+        log({ "/api/auth/oidc_callback": { "error": "jwt-invalid" } });
         res.redirect("/error?e=jwt-invalid");
         return;
       } else if (
@@ -250,23 +250,27 @@ app.get('/api/auth/oidc_callback', asyncHandler(async (req, res) => {
         "email_verified" in decoded &&
         decoded.email_verified
       ) {
-        const dn = typeof(decoded.display_name) == "string" ? decoded.display_name : null;
+        const dn = typeof (decoded.display_name) == "string" ? decoded.display_name : null;
         createSession(res, decoded.email, "sso", true, null, dn);
 
         let redirect = "/";
-        if ("redirect" in req.query) {
+        if ("redirect" in ss) {
+          if (ss["redirect"].match(/^\/[^\/\.]/)) {
+            redirect = normalise_uri(ss["redirect"]);
+          }
+        } else if ("redirect" in req.query) {
           const redirect_qs = req.query["redirect"];
           if (redirect_qs.match(/^\/[^\/\.]/)) {
             redirect = redirect_qs;
           }
         }
 
-        const desplit = typeof(ss.email) == "string" ? decoded.email.split("@") : [];
+        const desplit = typeof (ss.email) == "string" ? decoded.email.split("@") : [];
         log({
           "action": "sign-in-success",
           "type": "sso",
-          "ip": (typeof(req.true_ip) != "undefined" ? req.true_ip : null),
-          "email": (typeof(decoded.email) != "undefined" ? decoded.email : null),
+          "ip": (typeof (req.true_ip) != "undefined" ? req.true_ip : null),
+          "email": (typeof (decoded.email) != "undefined" ? decoded.email : null),
           "domain": desplit.length == 2 ? desplit[1] : null,
           "display_name": dn,
           "redirect": redirect
@@ -306,7 +310,7 @@ app.get('/api/auth/sign-in', asyncHandler(async (req, res) => {
       log({
         "action": "sign-in-success",
         "type": "ip",
-        "ip": (typeof(req.true_ip) != "undefined" ? req.true_ip : null),
+        "ip": (typeof (req.true_ip) != "undefined" ? req.true_ip : null),
         "email": null,
         "domain": null,
         "display_name": null,
@@ -316,10 +320,10 @@ app.get('/api/auth/sign-in', asyncHandler(async (req, res) => {
   }
 
   if (signed_in) {
-    createSession(res, email, sign_in_type, true);
+    createSession(res, email, sign_in_type, true, null, null, null);
   } else {
     const state = uuid.v4();
-    createSession(res, email, null, false, state);
+    createSession(res, email, null, false, state, null, redirect_url);
 
     let new_redirect = OIDC_AUTHORIZATION_ENDPOINT;
     new_redirect += "?response_type=" + OIDC_RESPONSE_TYPE;
@@ -359,9 +363,9 @@ app.get('*', (req, res) => {
 app.use((err, req, res, next) => {
   log({
     "error": err ? (
-      typeof(err) == "object" ? {
-        "stack": typeof(err["stack"]) == "string" ? err["stack"] : "",
-        "message": typeof(err["message"]) == "string" ? err["message"] : "",
+      typeof (err) == "object" ? {
+        "stack": typeof (err["stack"]) == "string" ? err["stack"] : "",
+        "message": typeof (err["message"]) == "string" ? err["message"] : "",
       } : err
     ) : null
   });
@@ -378,7 +382,7 @@ function redactString(s) {
       new RegExp(`(` + COOKIE_NAME + `=)[^;"]+`, "g"),
       new RegExp(`(state=)[^;"]+`, "g")
     ]) {
-      s = s.replace(r, "$1"+redacted_string);
+      s = s.replace(r, "$1" + redacted_string);
     }
 
     for (const t of [
@@ -395,10 +399,10 @@ function redactString(s) {
 }
 
 function log(obj) {
-  if (typeof(obj) != "object") {
+  if (typeof (obj) != "object") {
     return;
   }
-  if (typeof(obj["time"]) == "undefined" || obj["time"] == null) {
+  if (typeof (obj["time"]) == "undefined" || obj["time"] == null) {
     obj["time"] = new Date();
   }
   console.log(redactString(JSON.stringify(obj)));
@@ -411,7 +415,7 @@ function getRoutes() {
       let cm = fs.readFileSync('./content_metadata.json');
       _routes = JSON.parse(cm);
     } catch (e) {
-      log({"getRoutes": {"error": e}});
+      log({ "getRoutes": { "error": e } });
     }
   }
   return _routes;
@@ -472,7 +476,11 @@ function sessionStatus(req) {
       }
     }
   } catch (e) {
-    log({"sessionStatus": {"error": e}});
+    log({ "sessionStatus": { "error": e } });
+  }
+
+  if (!("redirect" in result)) {
+    result["redirect"] = null;
   }
 
   result["time"] = new Date();
@@ -482,13 +490,21 @@ function sessionStatus(req) {
 function renewSession(req, res) {
   ss = sessionStatus(req);
   if ("signed_in" in ss && ss.signed_in) {
-    return createSession(res, ss["email"], ss["type"], true, ss["state"], ss["display_name"])
+    return createSession(
+      res,
+      ss["email"],
+      ss["type"],
+      true,
+      ss["state"],
+      ss["display_name"],
+      ("redirect" in ss ? ss["redirect"] : null)
+    )
   }
 
   return { "signed_in": false, "time": new Date() };
 }
 
-function createSession(res, email, type, signed_in, state=null, display_name=null) {
+function createSession(res, email, type, signed_in, state = null, display_name = null, redirect = null) {
   const now = new Date();
   const expiresAt = new Date(+now + (SESSION_EXPIRY_MINUTES * 60 * 1000));
   const session = {
@@ -497,7 +513,8 @@ function createSession(res, email, type, signed_in, state=null, display_name=nul
     "email": email,
     "display_name": display_name,
     "state": state,
-    "expiresAt": expiresAt
+    "expiresAt": expiresAt,
+    "redirect": redirect
   };
 
   var cookie_object = {
@@ -528,8 +545,8 @@ function signOut(res) {
 }
 
 function strToList(s) {
-  if (typeof(s) != "string" || s.trim() == "") { return []; }
-  return s.toLowerCase().replaceAll(" ","").split(",");
+  if (typeof (s) != "string" || s.trim() == "") { return []; }
+  return s.toLowerCase().replaceAll(" ", "").split(",");
 }
 
 async function getOpenIDConfig() {
@@ -540,7 +557,7 @@ async function getOpenIDConfig() {
 }
 
 function _getOpenIDConfig() {
-  return new Promise(function(resolve, reject) {
+  return new Promise(function (resolve, reject) {
     const url = new URL(OIDC_CONFIGURATION_URL);
 
     const options = {
@@ -548,7 +565,7 @@ function _getOpenIDConfig() {
       port: parseInt(url.port) || 443,
       path: url.pathname,
       method: 'GET',
-      headers: { }
+      headers: {}
     };
 
     const req = (IS_LAMBDA ? https : http).request(options, res => {
@@ -585,13 +602,13 @@ async function getKey(header, callback) {
 }
 
 async function getUserToken(auth_code) {
-  return new Promise(function(resolve, reject) {
+  return new Promise(function (resolve, reject) {
     const url = new URL(OIDC_TOKEN_ENDPOINT);
 
     const post_data = querystring.stringify({
-      'client_id' : OIDC_CLIENT_ID,
-      'client_secret' : OIDC_CLIENT_SECRET,
-      'code' : auth_code
+      'client_id': OIDC_CLIENT_ID,
+      'client_secret': OIDC_CLIENT_SECRET,
+      'code': auth_code
     });
 
     const options = {
@@ -600,34 +617,34 @@ async function getUserToken(auth_code) {
       path: url.pathname,
       method: 'POST',
       headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Content-Length': post_data.length
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Length': post_data.length
       }
     };
 
     const req = (IS_LAMBDA ? https : http).request(options, res => {
       let chunks = [];
       res.on('error', (err) => {
-        log({"getUserToken": {"error": err}});
-        resolve({"error": true});
-      }).on("data", function(chunk) {
+        log({ "getUserToken": { "error": err } });
+        resolve({ "error": true });
+      }).on("data", function (chunk) {
         if (res.statusCode == 200) {
           chunks.push(chunk);
         } else {
-          resolve({"error": true});
+          resolve({ "error": true });
         }
       }).on('end', err => {
         if (err) {
-          log({"getUserToken": {"error": err}});
-          resolve({"error": true});
+          log({ "getUserToken": { "error": err } });
+          resolve({ "error": true });
         }
         let body = Buffer.concat(chunks).toString();
         try {
           let resd = JSON.parse(body);
           resolve(resd);
         } catch (e) {
-          log({"getUserToken": {"error": e, "body": body}});
-          resolve({"error": true});
+          log({ "getUserToken": { "error": e, "body": body } });
+          resolve({ "error": true });
         }
       });
     });
@@ -642,7 +659,7 @@ async function getUserToken(auth_code) {
 }
 
 function isAllowedIp(ip) {
-  if (!ip || typeof(ip) != "string" || ip.length == 0) {
+  if (!ip || typeof (ip) != "string" || ip.length == 0) {
     return false;
   }
 
@@ -699,7 +716,7 @@ function normalise_uri(u) {
       norm_uri = encodeURI(norm_uri);
     }
   } catch (e) {
-    log({"normalise_uri": {"error": e}});
+    log({ "normalise_uri": { "error": e } });
   }
 
   return norm_uri;
