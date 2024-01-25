@@ -325,7 +325,8 @@ app.get('/api/auth/sign-in', asyncHandler(async (req, res) => {
     new_redirect += "?response_type=" + OIDC_RESPONSE_TYPE;
     new_redirect += "&client_id=" + OIDC_CLIENT_ID;
     new_redirect += "&redirect_uri=" +
-      encodeURIComponent(URL_HOST + "/api/auth/oidc_callback");
+      encodeURIComponent(URL_HOST + "/api/auth/oidc_callback?redirect=")
+      + redirect_url;
     new_redirect += "&scope=openid%20email%20profile";
     new_redirect += "&state=" + state;
 
