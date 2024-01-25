@@ -328,12 +328,16 @@ User-agent: *
 
             let signed_in = await check_sign_in_from_cookies(norm_headers["cookie"], host);
             if (signed_in) {
-
               request.uri = routes[opt].key;
               return request;
 
             } else {
-              return redirect("/api/auth/sign-in?redirect=" + normopt);
+              let resp = redirect("/api/auth/sign-in");
+              resp["headers"]["set-cookie"] = [{
+                key: 'Set-Cookie',
+                value: '__Host-SGUK-Redirect='+normopt+';max-age=300',
+              }];
+              return resp;
             }
           }
         }
