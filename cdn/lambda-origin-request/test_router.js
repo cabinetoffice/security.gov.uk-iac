@@ -422,8 +422,9 @@ describe("origin_request", function() {
   it('fixture_2 - testing private routes (deny)', function(done) {
     origin_request.wrap_handler(fixture_2, {}, function(na, res) {
       const headers = Object.keys(res.headers);
-      expect(headers).to.include.members(["location"]);
-      expect(res.headers["location"][0].value).to.equal('/api/auth/sign-in?redirect=/private-example');
+      expect(headers).to.include.members(["location", "set-cookie"]);
+      expect(res.headers["location"][0].value).to.equal('/api/auth/sign-in');
+      expect(res.headers["set-cookie"][0].value).to.match(/=\/private-example/);
       done();
     });
   });
