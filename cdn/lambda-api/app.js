@@ -276,7 +276,7 @@ app.get('/api/auth/oidc_callback', asyncHandler(async (req, res) => {
 }));
 
 app.get('/api/auth/sign-in', asyncHandler(async (req, res) => {
-  let redirect_url = "/no-access";
+  let redirect_url = "/";
   let signed_in = false;
 
   const ss = sessionStatus(req);
@@ -288,7 +288,7 @@ app.get('/api/auth/sign-in', asyncHandler(async (req, res) => {
   if (
     "redirect" in ss
     && ss["redirect"] != null
-    && ss["redirect"].match(/^\/[^\/\.]/)
+    && ss["redirect"]
   ) {
     redirect_url = normalise_uri(ss["redirect"]);
   } else if ("redirect" in req.query) {
