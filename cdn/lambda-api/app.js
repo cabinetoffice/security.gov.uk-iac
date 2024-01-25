@@ -253,19 +253,7 @@ app.get('/api/auth/oidc_callback', asyncHandler(async (req, res) => {
         const dn = typeof (decoded.display_name) == "string" ? decoded.display_name : null;
         createSession(res, decoded.email, "sso", true, null, dn);
 
-        let redirect = "/";
-        if (
-          "redirect" in ss
-          && ss["redirect"] != null
-          && ss["redirect"].match(/^\/[^\/\.]/)
-        ) {
-          redirect = normalise_uri(ss["redirect"]);
-        } else if ("redirect" in req.query) {
-          const redirect_qs = req.query["redirect"];
-          if (redirect_qs.match(/^\/[^\/\.]/)) {
-            redirect = redirect_qs;
-          }
-        }
+        let redirect = "/api/auth/sign-in";
 
         const desplit = typeof (ss.email) == "string" ? decoded.email.split("@") : [];
         log({
@@ -337,8 +325,7 @@ app.get('/api/auth/sign-in', asyncHandler(async (req, res) => {
     new_redirect += "?response_type=" + OIDC_RESPONSE_TYPE;
     new_redirect += "&client_id=" + OIDC_CLIENT_ID;
     new_redirect += "&redirect_uri=" +
-      encodeURIComponent(URL_HOST + "/api/auth/oidc_callback?redirect=")
-      + redirect_url;
+      encodeURIComponent(URL_HOST + "/api/auth/oidc_callback");
     new_redirect += "&scope=openid%20email%20profile";
     new_redirect += "&state=" + state;
 
