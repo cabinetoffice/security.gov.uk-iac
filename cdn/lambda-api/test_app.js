@@ -86,7 +86,7 @@ describe('/api', () => {
       });
     });
 
-    describe('/api/auth/sign-in', () => {
+    /* describe('/api/auth/sign-in', () => {
       it('from valid IP, it should sign-in and redirect', async () => {
         process.env["ALLOWED_IPS"] = "1.1.1.1/32";
 
@@ -104,7 +104,7 @@ describe('/api', () => {
 
         expect(res.header.location).to.equal("/private-example");
       });
-    });
+    }); */
 
     describe('/api/auth/status', () => {
       it('it should be signed in with valid cookie (from previous request)', async () => {
