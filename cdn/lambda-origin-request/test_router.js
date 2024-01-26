@@ -394,6 +394,111 @@ fixture_13 = {
   ]
 }
 
+fixture_14 = {
+  "Records": [
+    {
+      "cf": {
+        "config": {
+          "distributionId": "EXAMPLE"
+        },
+        "request": {
+          "uri": "/private-example",
+          "origin": {
+            "custom": {
+              "customHeaders": {
+                "x-signing-secret": [{
+                  value: "abc123"
+                }]
+              }
+            }
+          },
+          "method": "GET",
+          "querystring": "action=signurl&organisation=Cabinet Office&secret=abc123",
+          "clientIp": "2001:cdba::3257:9652",
+          "headers": {
+            "host": [
+              {
+                "key": "Host",
+                "value": "www.nonprod.security.gov.uk"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
+
+fixture_15 = {
+  "Records": [
+    {
+      "cf": {
+        "config": {
+          "distributionId": "EXAMPLE"
+        },
+        "request": {
+          "uri": "/private-example",
+          "origin": {
+            "custom": {
+              "customHeaders": {
+                "x-signing-secret": [{
+                  value: "abc123"
+                }]
+              }
+            }
+          },
+          "method": "GET",
+          "querystring": "action=verify&organisation=Cabinet Office&signature=a39c9424fab577a078e54142f67d0f0b1f8ee02cafe91284cb9b7cc064daef62",
+          "clientIp": "2001:cdba::3257:9652",
+          "headers": {
+            "host": [
+              {
+                "key": "Host",
+                "value": "www.nonprod.security.gov.uk"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
+
+fixture_16 = {
+  "Records": [
+    {
+      "cf": {
+        "config": {
+          "distributionId": "EXAMPLE"
+        },
+        "request": {
+          "uri": "/private-example",
+          "origin": {
+            "custom": {
+              "customHeaders": {
+                "x-signing-secret": [{
+                  value: "abc123"
+                }]
+              }
+            }
+          },
+          "method": "GET",
+          "querystring": "action=verify&organisation=Cabinet Office&signature=123",
+          "clientIp": "2001:cdba::3257:9652",
+          "headers": {
+            "host": [
+              {
+                "key": "Host",
+                "value": "www.nonprod.security.gov.uk"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
+
 describe("origin_request", function() {
   it('no fixture - to return false', function(done) {
     origin_request.wrap_handler({}, {}, function(na, res) {
@@ -521,6 +626,32 @@ describe("origin_request", function() {
   it('fixture_13', function(done) {
     origin_request.wrap_handler(fixture_13, {}, function(na, res) {
       expect(res.uri).to.equal('/not-found.html');
+      done();
+    });
+  });
+
+  it('fixture_14 - testing signing url', function(done) {
+    origin_request.wrap_handler(fixture_14, {"SIGNED_IN_OVERRIDE": true}, function(na, res) {
+      const headers = Object.keys(res.headers);
+      expect(headers).to.not.include.members(["location"]);
+      expect(res.status).to.equal(200);
+      expect(res.body).to.contain('signature=');
+      done();
+    });
+  });
+
+  it('fixture_15 - verifying signing url', function(done) {
+    origin_request.wrap_handler(fixture_15, {}, function(na, res) {
+      const headers = Object.keys(res.headers);
+      expect(headers).to.not.include.members(["location"]);
+      expect(res.uri).to.equal('/private-example.html');
+      done();
+    });
+  });
+
+  it('fixture_16 - failed signing url verification', function(done) {
+    origin_request.wrap_handler(fixture_16, {}, function(na, res) {
+      expect(res.status).to.equal(401);
       done();
     });
   });

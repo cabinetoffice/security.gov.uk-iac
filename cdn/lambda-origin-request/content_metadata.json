@@ -36,6 +36,7 @@
     "breadcrumbs": {}
   },
   "/private-example.html": {
+    "signable": true,
     "publish": true,
     "private": true,
     "restrict_to_email_domains": [

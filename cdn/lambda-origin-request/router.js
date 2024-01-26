@@ -1,4 +1,6 @@
 const fs = require('fs');
+const queryString = require('querystring');
+const crypto = require('crypto');
 
 function check_sign_in_from_cookies(cookies, host) {
   return new Promise(function(resolve, reject) {
@@ -41,6 +43,7 @@ function load_routes() {
         routes[rkey] = {
           "key": route.key,
           "private": route.private,
+          "signable": route.signable || false,
         }
       }
       routes_loaded = true;
@@ -88,6 +91,8 @@ exports.wrap_handler = async (event, context, callback) => {
   try {
     const cf = event.Records[0].cf;
 
+    console.log(JSON.stringify(cf));
+
     log_object["config.requestId"] = "requestId" in cf.config ?
       cf.config.requestId : null;
 
@@ -104,7 +109,7 @@ exports.wrap_handler = async (event, context, callback) => {
   }
 
   if (!log_object["is_error"]) {
-    res = await handler(event);
+    res = await handler(event, context);
 
     try {
       if (!res) {
@@ -165,11 +170,23 @@ function normalise_uri(u) {
   return norm_uri;
 }
 
-async function handler(event) {
+async function handler(event, context) {
     if (typeof(event) == "undefined" || Object.keys(event).length == 0) {
       return false;
     }
     const request = event.Records[0].cf.request;
+
+    let signed_in = false;
+    if (context && context && "SIGNED_IN_OVERRIDE" in context) {
+      signed_in = true;
+    }
+
+    let signingSecret = "";
+    try {
+      signingSecret = request.origin.custom.customHeaders["x-signing-secret"][0].value || "";
+    } catch (e) {
+      // console.log("signingSecret error:", e);
+    }
 
     // ==== only GET method allowed ====
 
@@ -188,7 +205,7 @@ async function handler(event) {
     // ==== normalise the request.headers ====
 
     let norm_headers = {};
-    for (header in request.headers) {
+    for (let header in request.headers) {
       norm_headers[header.toLowerCase()] = request.headers[header][0].value;
     }
 
@@ -299,8 +316,8 @@ User-agent: *
       return redirect("https://vulnerability-reporting.service.security.gov.uk/.well-known/security.txt");
     }
 
-
     const base_url_opt = norm_uri.replace(/\/+$/, "").replace(/.html$/, "");
+
     const url_options = [
       base_url_opt + "/index.html",
       base_url_opt,
@@ -325,8 +342,72 @@ User-agent: *
             return request;
 
           } else if (routes[opt]["private"]) {
+            if (!signed_in) {
+              signed_in = await check_sign_in_from_cookies(norm_headers["cookie"], host);
+            }
 
-            let signed_in = await check_sign_in_from_cookies(norm_headers["cookie"], host);
+            const parsedQuerystrings = queryString.parse(request["querystring"] || "");
+
+            let is_verified_request = false;
+
+            if (
+              signingSecret !== ""
+              && "action" in parsedQuerystrings
+              && parsedQuerystrings["action"] == "signurl"
+              && "organisation" in parsedQuerystrings
+              && "secret" in parsedQuerystrings
+              && parsedQuerystrings["secret"] == signingSecret
+            ) {
+              if (!signed_in) {
+                return res401();
+              }
+
+              const org = parsedQuerystrings["organisation"];
+              const sig = generateHash(host + base_url_opt + "?organisation=" + org, signingSecret);
+              const url = "https://" + host + base_url_opt + "?signature=" + sig + "&organisation=" + org;
+
+              return {
+                  status: 200,
+                  statusDescription: 'OK',
+                  body: JSON.stringify({
+                    url: url,
+                    organisation: org
+                  }),
+                  headers: {
+                      "content-type": [{
+                          key: 'Content-Type',
+                          value: "application/json",
+                      }]
+                  }
+              }
+            }
+
+            if (
+              signingSecret !== ""
+              && "action" in parsedQuerystrings
+              && parsedQuerystrings["action"] == "verify"
+              && "organisation" in parsedQuerystrings
+              && "signature" in parsedQuerystrings
+            ) {
+              const org = parsedQuerystrings["organisation"];
+              const sig = generateHash(host + base_url_opt + "?organisation=" + org, signingSecret);
+
+              if (sig == parsedQuerystrings["signature"]) {
+                is_verified_request = true;
+              } else {
+                return res401();
+              }
+            }
+
+            if (
+              !signed_in
+              && is_verified_request
+              && "signable" in routes[opt]
+              && routes[opt]["signable"]
+            ) {
+              signed_in = true;
+            }
+
             if (signed_in) {
               request.uri = routes[opt].key;
               return request;
@@ -349,4 +430,18 @@ User-agent: *
     request.uri = "/not-found.html";
     return request;
     // return redirect("/not-found");
+}
+
+function generateHash(instr, salt) {
+  const hash = crypto.createHmac('sha256', salt)
+    .update(instr)
+    .digest('hex');
+  return hash;
+}
+
+function res401() {
+  return {
+    status: 401,
+    statusDescription: 'Unauthorised'
+  }
 }
