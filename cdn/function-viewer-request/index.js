@@ -1,6 +1,8 @@
 function handler(event) {
     var request = event.request;
 
+    request.headers['x-signing-secret'] = {value: ""};
+
     var clientIP = event.viewer.ip;
     request.headers['true-client-ip'] = {value: clientIP};
 
