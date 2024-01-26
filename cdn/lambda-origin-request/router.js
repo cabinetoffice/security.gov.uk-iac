@@ -332,7 +332,7 @@ User-agent: *
               return request;
 
             } else {
-              let burl = btoa(normopt);
+              let burl = btoa(normopt).replaceAll("=", "-");
               let resp = redirect("/api/auth/sign-in");
               resp["headers"]["set-cookie"] = [{
                 key: 'Set-Cookie',

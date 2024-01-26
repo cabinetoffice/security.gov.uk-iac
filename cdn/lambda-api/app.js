@@ -363,8 +363,16 @@ function getRedirect(req, res) {
   let redirect = "/signed-in";
 
   try {
-    if (REDIRECT_COOKIE_NAME in req.cookies) {
-      redirect = atob(req.cookies[REDIRECT_COOKIE_NAME]);
+    if ("cookie" in req.headers) {
+      let rawCookies = req.headers["cookie"].split(";")
+      for (let ci = 0; ci < rawCookies.length; ci++) {
+        const rawCookie = rawCookies[ci];
+        if (rawCookie.indexOf(REDIRECT_COOKIE_NAME) == 0) {
+          redirect = atob(rawCookie.split("=")[1].replaceAll("-", "="));
+          log({"function": "getRedirect", "redirect": redirect}); 
+          break;
+        }
+      }
     }
   } catch (error) {
     log({"function": "getRedirect", "error": error}); 

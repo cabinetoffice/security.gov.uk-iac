@@ -90,7 +90,7 @@ describe('/api', () => {
       it('from valid IP, it should sign-in and redirect', async () => {
         process.env["ALLOWED_IPS"] = "1.1.1.1/32";
 
-        let redcookie = "SGUK-Redirect=L3ByaXZhdGUtZXhhbXBsZQ==; Max-Age=300; Path=/";
+        let redcookie = "SGUK-Redirect=L3ByaXZhdGUtZXhhbXBsZQ--; Max-Age=300; Path=/";
 
         let res = await chai.request(server)
         .get('/api/auth/sign-in')
