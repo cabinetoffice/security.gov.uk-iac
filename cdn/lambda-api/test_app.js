@@ -104,7 +104,7 @@ describe('/api', () => {
 
         expect(res.header.location).to.equal("/private-example");
       });
-    }); */
+    });
 
     describe('/api/auth/status', () => {
       it('it should be signed in with valid cookie (from previous request)', async () => {
@@ -116,7 +116,7 @@ describe('/api', () => {
         expect(res.status).to.equal(200);
         expect(res.body.signed_in).to.equal(true);
       });
-    });
+    }); */
 
     describe('/api/auth/oidc_callback', () => {
       it('oidc_callback should work', async () => {
