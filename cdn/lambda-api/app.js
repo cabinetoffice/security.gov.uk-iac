@@ -253,7 +253,11 @@ app.get('/api/auth/oidc_callback', asyncHandler(async (req, res) => {
         const dn = typeof (decoded.display_name) == "string" ? decoded.display_name : null;
         createSession(res, decoded.email, "sso", true, null, dn);
 
-        let redirect = "/api/auth/sign-in";
+        let redirect = "/signed-in";
+        let redcookie = "__Host-SGUK-Redirect";
+        if (redcookie in req.cookies) {
+          redirect = req.cookies[redcookie];
+        }
 
         const desplit = typeof (ss.email) == "string" ? decoded.email.split("@") : [];
         log({
@@ -266,6 +270,10 @@ app.get('/api/auth/oidc_callback', asyncHandler(async (req, res) => {
           "redirect": redirect
         });
         res.redirect(redirect);
+        const now = new Date();
+        res.cookie("__Host-SGUK-Redirect", "", {
+          expires: now
+        });
         return;
       } else {
         res.redirect("/error?e=jwt-email-not-found");
@@ -285,19 +293,6 @@ app.get('/api/auth/sign-in', asyncHandler(async (req, res) => {
   let email = signed_in ? ss["email"] : null;
   let sign_in_type = signed_in ? ss["type"] : null;
 
-  if (
-    "redirect" in ss
-    && ss["redirect"] != null
-    && ss["redirect"]
-  ) {
-    redirect_url = normalise_uri(ss["redirect"]);
-  } else if ("redirect" in req.query) {
-    let redirect_qs = req.query["redirect"].toLowerCase();
-    if (redirect_qs.match(/^\/[^\/\.]/)) {
-      redirect_url = normalise_uri(redirect_qs);
-    }
-  }
-
   if (!signed_in) {
     const ip_allowed = isAllowedIp(req.true_ip);
     if (ip_allowed) {
@@ -309,24 +304,22 @@ app.get('/api/auth/sign-in', asyncHandler(async (req, res) => {
         "ip": (typeof (req.true_ip) != "undefined" ? req.true_ip : null),
         "email": null,
         "domain": null,
-        "display_name": null,
-        "redirect": redirect_url
+        "display_name": null
       });
     }
   }
 
   if (signed_in) {
-    createSession(res, email, sign_in_type, true, null, null, null);
+    createSession(res, email, sign_in_type, true);
   } else {
     const state = uuid.v4();
-    createSession(res, email, null, false, state, null, redirect_url);
+    createSession(res, email, null, false, state);
 
     let new_redirect = OIDC_AUTHORIZATION_ENDPOINT;
     new_redirect += "?response_type=" + OIDC_RESPONSE_TYPE;
     new_redirect += "&client_id=" + OIDC_CLIENT_ID;
     new_redirect += "&redirect_uri=" +
-      encodeURIComponent(URL_HOST + "/api/auth/oidc_callback?redirect=")
-      + redirect_url;
+      encodeURIComponent(URL_HOST + "/api/auth/oidc_callback");
     new_redirect += "&scope=openid%20email%20profile";
     new_redirect += "&state=" + state;
 
@@ -475,10 +468,6 @@ function sessionStatus(req) {
     log({ "sessionStatus": { "error": e } });
   }
 
-  if (!("redirect" in result)) {
-    result["redirect"] = null;
-  }
-
   result["time"] = new Date();
   return result;
 }
@@ -492,15 +481,14 @@ function renewSession(req, res) {
       ss["type"],
       true,
       ss["state"],
-      ss["display_name"],
-      ("redirect" in ss ? ss["redirect"] : null)
+      ss["display_name"]
     )
   }
 
   return { "signed_in": false, "time": new Date() };
 }
 
-function createSession(res, email, type, signed_in, state = null, display_name = null, redirect = null) {
+function createSession(res, email, type, signed_in, state = null, display_name = null) {
   const now = new Date();
   const expiresAt = new Date(+now + (SESSION_EXPIRY_MINUTES * 60 * 1000));
   const session = {
@@ -509,8 +497,7 @@ function createSession(res, email, type, signed_in, state = null, display_name =
     "email": email,
     "display_name": display_name,
     "state": state,
-    "expiresAt": expiresAt,
-    "redirect": redirect
+    "expiresAt": expiresAt
   };
 
   var cookie_object = {
@@ -537,6 +524,9 @@ function signOut(res) {
     signed: true,
     sameSite: "lax",
     secure: IS_LAMBDA,
+  });
+  res.cookie("__Host-SGUK-Redirect", "", {
+    expires: now
   });
 }
 
