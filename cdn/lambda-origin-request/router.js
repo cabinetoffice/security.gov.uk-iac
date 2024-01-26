@@ -332,10 +332,11 @@ User-agent: *
               return request;
 
             } else {
+              let burl = btoa(normopt);
               let resp = redirect("/api/auth/sign-in");
               resp["headers"]["set-cookie"] = [{
                 key: 'Set-Cookie',
-                value: '__Host-SGUK-Redirect='+normopt+';max-age=300',
+                value: '__Host-SGUK-Redirect='+burl+'; Max-Age=300; Path=/; Secure',
               }];
               return resp;
             }

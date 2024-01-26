@@ -37,6 +37,7 @@ global.http = null;
 
 let COOKIE_NAME = IS_LAMBDA ? "__Host-Session-SGUK" : "Session-SGUK";
 let COOKIE_HTTPONLY = ENVIRONMENT == "prod" ? false : true;
+let REDIRECT_COOKIE_NAME = IS_LAMBDA ? "__Host-SGUK-Redirect" : "SGUK-Redirect";
 
 const app = express();
 app.ALLOWED_IPS = strToList(process.env['ALLOWED_IPS']);
@@ -253,11 +254,7 @@ app.get('/api/auth/oidc_callback', asyncHandler(async (req, res) => {
         const dn = typeof (decoded.display_name) == "string" ? decoded.display_name : null;
         createSession(res, decoded.email, "sso", true, null, dn);
 
-        let redirect = "/signed-in";
-        let redcookie = "__Host-SGUK-Redirect";
-        if (redcookie in req.cookies) {
-          redirect = req.cookies[redcookie];
-        }
+        let redirect = getRedirect(req, res);
 
         const desplit = typeof (ss.email) == "string" ? decoded.email.split("@") : [];
         log({
@@ -269,11 +266,8 @@ app.get('/api/auth/oidc_callback', asyncHandler(async (req, res) => {
           "display_name": dn,
           "redirect": redirect
         });
+        
         res.redirect(redirect);
-        const now = new Date();
-        res.cookie("__Host-SGUK-Redirect", "", {
-          expires: now
-        });
         return;
       } else {
         res.redirect("/error?e=jwt-email-not-found");
@@ -311,6 +305,7 @@ app.get('/api/auth/sign-in', asyncHandler(async (req, res) => {
 
   if (signed_in) {
     createSession(res, email, sign_in_type, true);
+    redirect_url = getRedirect(req, res);
   } else {
     const state = uuid.v4();
     createSession(res, email, null, false, state);
@@ -363,6 +358,28 @@ app.use((err, req, res, next) => {
 });
 
 // ==== functions ====
+
+function getRedirect(req, res) {
+  let redirect = "/signed-in";
+
+  try {
+    if (REDIRECT_COOKIE_NAME in req.cookies) {
+      redirect = atob(req.cookies[REDIRECT_COOKIE_NAME]);
+    }
+  } catch (error) {
+    log({"function": "getRedirect", "error": error}); 
+  }
+
+  const now = new Date();
+  res.cookie(REDIRECT_COOKIE_NAME, "", {
+    expires: now,
+    path: "/",
+    signed: false,
+    secure: IS_LAMBDA,
+  });
+
+  return redirect;
+}
 
 function redactString(s) {
   const redacted_string = "REDACTED";

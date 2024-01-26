@@ -86,13 +86,16 @@ describe('/api', () => {
       });
     });
 
-    /* describe('/api/auth/sign-in', () => {
+    describe('/api/auth/sign-in', () => {
       it('from valid IP, it should sign-in and redirect', async () => {
         process.env["ALLOWED_IPS"] = "1.1.1.1/32";
 
+        let redcookie = "SGUK-Redirect=L3ByaXZhdGUtZXhhbXBsZQ==; Max-Age=300; Path=/";
+
         let res = await chai.request(server)
-        .get('/api/auth/sign-in?redirect=/private-example.html')
+        .get('/api/auth/sign-in')
         .set('true-client-ip', '1.1.1.1')
+        .set('cookie', redcookie)
         .redirects(0);
 
         expect(res.status).to.equal(302);
@@ -116,12 +119,16 @@ describe('/api', () => {
         expect(res.status).to.equal(200);
         expect(res.body.signed_in).to.equal(true);
       });
-    }); */
+    });
 
     describe('/api/auth/oidc_callback', () => {
       it('oidc_callback should work', async () => {
         process.env["ALLOWED_IPS"] = "";
-        if ("OIDC_CONFIGURATION_URL" in process.env) {
+        process.env["OIDC_CONFIGURATION_URL"] = "";
+        if (
+          "OIDC_CONFIGURATION_URL" in process.env
+          && process.env["OIDC_CONFIGURATION_URL"]
+        ) {
           console.log("Running...");
 
           let res = await chai.request(server)
