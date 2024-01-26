@@ -364,8 +364,8 @@ User-agent: *
               }
 
               const org = parsedQuerystrings["organisation"];
-              const sig = generateHash(host + base_url_opt + "?organisation=" + org, signingSecret);
-              const url = "https://" + host + base_url_opt + "?signature=" + sig + "&organisation=" + org;
+              const sig = generateHash(host + normopt + "?organisation=" + org, signingSecret);
+              const url = "https://" + host + normopt + "?action=verify&signature=" + sig + "&organisation=" + org;
 
               return {
                   status: 200,
@@ -391,7 +391,7 @@ User-agent: *
               && "signature" in parsedQuerystrings
             ) {
               const org = parsedQuerystrings["organisation"];
-              const sig = generateHash(host + base_url_opt + "?organisation=" + org, signingSecret);
+              const sig = generateHash(host + normopt + "?organisation=" + org, signingSecret);
 
               if (sig == parsedQuerystrings["signature"]) {
                 is_verified_request = true;
