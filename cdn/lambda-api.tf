@@ -1,9 +1,9 @@
 resource "null_resource" "build_api_lambda" {
-  count    = var.IS_CI ? 0 : 1
+  count = var.IS_CI ? 0 : 1
   triggers = {
-    content_md_hash = sha256(file("../../security.gov.uk-content/build/content_metadata.json"))
-    app_js_hash = sha256(file("lambda-api/app.js"))
-    lambda_js_hash = sha256(file("lambda-api/lambda.js"))
+    content_md_hash   = sha256(file("../../security.gov.uk-content/build/content_metadata.json"))
+    app_js_hash       = sha256(file("lambda-api/app.js"))
+    lambda_js_hash    = sha256(file("lambda-api/lambda.js"))
     package_json_hash = sha256(file("lambda-api/package.json"))
   }
   provisioner "local-exec" {
@@ -29,11 +29,11 @@ resource "aws_lambda_function" "api_lambda" {
   filename         = data.archive_file.api_lambda_zip.output_path
   source_code_hash = data.archive_file.api_lambda_zip.output_base64sha256
 
-  description      = "${terraform.workspace}: Lambda Viewer Request for CloudFront"
-  function_name    = local.api_lambda_name
-  role             = aws_iam_role.api_lambda_role.arn
-  handler          = "lambda.handler"
-  runtime          = "nodejs18.x"
+  description   = "${terraform.workspace}: Lambda Viewer Request for CloudFront"
+  function_name = local.api_lambda_name
+  role          = aws_iam_role.api_lambda_role.arn
+  handler       = "lambda.handler"
+  runtime       = "nodejs18.x"
 
   memory_size = 384
   timeout     = 30
@@ -84,11 +84,11 @@ resource "aws_iam_policy" "api_lambda_policy" {
           "logs:PutLogEvents"
         ],
         Resource = "arn:aws:logs:*:*:*",
-        Effect = "Allow"
+        Effect   = "Allow"
       },
       {
-        Effect = "Allow"
-        Action = [ "kms:Decrypt" ]
+        Effect   = "Allow"
+        Action   = ["kms:Decrypt"]
         Resource = aws_kms_key.lambda_api_env_vars.arn
         Condition = {
           StringEquals = {
@@ -97,9 +97,9 @@ resource "aws_iam_policy" "api_lambda_policy" {
         }
       },
       {
-        Action = [ "s3:GetObject" ],
+        Action   = ["s3:GetObject"],
         Resource = "${aws_s3_bucket.cdn_source_bucket.arn}/*"
-        Effect = "Allow"
+        Effect   = "Allow"
       }
     ]
   })

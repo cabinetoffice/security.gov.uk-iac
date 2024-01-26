@@ -25,7 +25,12 @@ resource "aws_cloudfront_origin_request_policy" "custom_lae_s3_origin" {
   cookies_config {
     cookie_behavior = "whitelist"
     cookies {
-      items = ["__Host-Session-SGUK", "__host-session-sguk"]
+      items = [
+        "__Host-Session-SGUK",
+        "__host-session-sguk",
+        "__Host-SGUK-Redirect",
+        "__host-sguk-redirect"
+      ]
     }
   }
   headers_config {
@@ -60,6 +65,8 @@ resource "aws_cloudfront_origin_request_policy" "api_origin" {
       items = [
         "__Host-Session-SGUK",
         "__host-session-sguk",
+        "__Host-SGUK-Redirect",
+        "__host-sguk-redirect"
       ]
     }
   }
@@ -105,7 +112,7 @@ resource "aws_cloudfront_function" "viewer_response" {
 # == distribution ==
 
 resource "aws_cloudfront_distribution" "cdn" {
-  depends_on   = [aws_acm_certificate.cdn]
+  depends_on = [aws_acm_certificate.cdn]
 
   origin {
     domain_name = aws_s3_bucket.cdn_source_bucket.bucket_regional_domain_name
@@ -134,11 +141,11 @@ resource "aws_cloudfront_distribution" "cdn" {
     bucket          = aws_s3_bucket.cdn_logging.bucket_domain_name
     prefix          = terraform.workspace
   }
-  
-  http_version        = "http2and3"
-  enabled             = true
-  is_ipv6_enabled     = true
-  comment             = local.primary_domain
+
+  http_version    = "http2and3"
+  enabled         = true
+  is_ipv6_enabled = true
+  comment         = local.primary_domain
 
   aliases = [local.primary_domain, "www.${local.primary_domain}"]
 
@@ -149,8 +156,8 @@ resource "aws_cloudfront_distribution" "cdn" {
 
     cache_policy_id          = data.aws_cloudfront_cache_policy.caching_disabled.id
     origin_request_policy_id = aws_cloudfront_origin_request_policy.custom_lae_s3_origin.id
-    compress               = false
-    viewer_protocol_policy = "redirect-to-https"
+    compress                 = false
+    viewer_protocol_policy   = "redirect-to-https"
 
     lambda_function_association {
       event_type = "origin-request"
@@ -210,8 +217,8 @@ resource "aws_cloudfront_distribution" "cdn" {
 
     cache_policy_id          = data.aws_cloudfront_cache_policy.caching_disabled.id
     origin_request_policy_id = aws_cloudfront_origin_request_policy.api_origin.id
-    compress               = false
-    viewer_protocol_policy = "redirect-to-https"
+    compress                 = false
+    viewer_protocol_policy   = "redirect-to-https"
 
     function_association {
       event_type   = "viewer-request"

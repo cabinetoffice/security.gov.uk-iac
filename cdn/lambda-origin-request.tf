@@ -1,7 +1,7 @@
 resource "null_resource" "build_or_lambda" {
-  count    = var.IS_CI ? 0 : 1
+  count = var.IS_CI ? 0 : 1
   triggers = {
-    router_js_hash = sha256(file("lambda-origin-request/router.js"))
+    router_js_hash  = sha256(file("lambda-origin-request/router.js"))
     content_md_hash = sha256(file("../../security.gov.uk-content/build/content_metadata.json"))
   }
   provisioner "local-exec" {
@@ -24,11 +24,11 @@ resource "aws_lambda_function" "origin_request_lambda" {
   filename         = data.archive_file.origin_request_lambda_zip.output_path
   source_code_hash = data.archive_file.origin_request_lambda_zip.output_base64sha256
 
-  description      = "${terraform.workspace}: Lambda Origin Request for CloudFront"
-  function_name    = local.origin_request_lambda_name
-  role             = aws_iam_role.origin_request_lambda_role.arn
-  handler          = "router.wrap_handler"
-  runtime          = "nodejs18.x"
+  description   = "${terraform.workspace}: Lambda Origin Request for CloudFront"
+  function_name = local.origin_request_lambda_name
+  role          = aws_iam_role.origin_request_lambda_role.arn
+  handler       = "router.wrap_handler"
+  runtime       = "nodejs18.x"
 
   publish = true
 
