@@ -43,8 +43,7 @@ resource "aws_cloudfront_origin_request_policy" "custom_lae_s3_origin" {
         "X-Forwarded-For",
         "true-client-ip",
         "true-user-agent",
-        "true-host",
-        "x-signing-secret"
+        "true-host"
       ]
     }
   }
@@ -81,8 +80,7 @@ resource "aws_cloudfront_origin_request_policy" "api_origin" {
         "X-Forwarded-For",
         "true-client-ip",
         "true-user-agent",
-        "true-host",
-        "x-signing-secret"
+        "true-host"
       ]
     }
   }
