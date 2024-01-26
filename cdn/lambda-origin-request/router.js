@@ -183,7 +183,8 @@ async function handler(event, context) {
 
     let signingSecret = "";
     try {
-      signingSecret = request.origin.custom.customHeaders["x-signing-secret"][0].value || "";
+      signingSecret = request.origin.s3.customHeaders["x-signing-secret"][0].value || "";
+      console.log("signingSecret:", signingSecret);
     } catch (e) {
       // console.log("signingSecret error:", e);
     }

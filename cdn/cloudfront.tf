@@ -50,7 +50,7 @@ resource "aws_cloudfront_origin_request_policy" "custom_lae_s3_origin" {
   query_strings_config {
     query_string_behavior = "whitelist"
     query_strings {
-      items = ["t", "p"]
+      items = ["t", "p", "action", "secret", "organisation", "signature"]
     }
   }
 }
@@ -109,6 +109,11 @@ resource "aws_cloudfront_function" "viewer_response" {
   code    = file("function-viewer-response/index.js")
 }
 
+resource "random_password" "signing_secret" {
+  length  = 32
+  special = false
+}
+
 # == distribution ==
 
 resource "aws_cloudfront_distribution" "cdn" {
@@ -117,6 +122,11 @@ resource "aws_cloudfront_distribution" "cdn" {
   origin {
     domain_name = aws_s3_bucket.cdn_source_bucket.bucket_regional_domain_name
     origin_id   = local.s3_origin_id
+
+    custom_header {
+      name  = "x-signing-secret"
+      value = random_password.signing_secret.result
+    }
 
     s3_origin_config {
       origin_access_identity = aws_cloudfront_origin_access_identity.cdn_source_bucket.cloudfront_access_identity_path

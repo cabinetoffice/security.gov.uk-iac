@@ -404,7 +404,7 @@ fixture_14 = {
         "request": {
           "uri": "/private-example",
           "origin": {
-            "custom": {
+            "s3": {
               "customHeaders": {
                 "x-signing-secret": [{
                   value: "abc123"
@@ -439,7 +439,7 @@ fixture_15 = {
         "request": {
           "uri": "/private-example",
           "origin": {
-            "custom": {
+            "s3": {
               "customHeaders": {
                 "x-signing-secret": [{
                   value: "abc123"
@@ -474,7 +474,7 @@ fixture_16 = {
         "request": {
           "uri": "/private-example",
           "origin": {
-            "custom": {
+            "s3": {
               "customHeaders": {
                 "x-signing-secret": [{
                   value: "abc123"
