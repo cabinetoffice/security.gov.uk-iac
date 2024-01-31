@@ -75,7 +75,7 @@ function handler(event) {
     }
 
     if (!currentHeaderKeys.includes('cross-origin-resource-policy')) {
-      headers['cross-origin-resource-policy'] = { value: "same-origin" };
+      headers['cross-origin-resource-policy'] = { value: "cross-origin" };
     }
 
     return response;
