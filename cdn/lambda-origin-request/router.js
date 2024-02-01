@@ -359,10 +359,6 @@ User-agent: *
               && "secret" in parsedQuerystrings
               && parsedQuerystrings["secret"] == signingSecret
             ) {
-              if (!signed_in) {
-                return res401();
-              }
-
               const org = parsedQuerystrings["organisation"];
               const sig = generateHash(host + normopt + "?organisation=" + org, signingSecret);
               const url = "https://" + host + normopt + "?action=verify&signature=" + sig + "&organisation=" + org;
