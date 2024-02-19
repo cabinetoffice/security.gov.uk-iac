@@ -93,6 +93,17 @@ resource "aws_route53_record" "security_txt-prod" {
   ]
 }
 
+resource "aws_route53_record" "myncsc-prod" {
+  zone_id = aws_route53_zone.sec-gov-uk.zone_id
+  name    = "_asvdns-b216d260-ad66-4361-b03a-5e4d33030e96"
+  type    = "TXT"
+  ttl     = local.standard_ttl
+
+  records = [
+    "asvdns_89aec9a2-b17e-4fd2-864e-ad9918dcd459",
+  ]
+}
+
 module "aws-r53-parked-domain" {
   source                 = "github.com/co-cddo/aws-route53-parked-govuk-domain//terraform?ref=5e85556ce417cd335c440fd1e7079bd331f443d5"
   zone_id                = aws_route53_zone.sec-gov-uk.zone_id
