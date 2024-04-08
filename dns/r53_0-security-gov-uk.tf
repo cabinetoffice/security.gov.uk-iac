@@ -81,6 +81,28 @@ resource "aws_route53_record" "www-acm-cert" {
   ]
 }
 
+resource "aws_route53_record" "root-acm-cert-beta" {
+  zone_id = aws_route53_zone.sec-gov-uk.zone_id
+  name    = "_b12eda99a4cee1338f2cf718c65d76df.security.gov.uk."
+  type    = "CNAME"
+  ttl     = local.extra_low_ttl
+
+  records = [
+    "_687546ef2b147181f752a60af5c807c3.mhbtsbpdnt.acm-validations.aws."
+  ]
+}
+
+resource "aws_route53_record" "www-acm-cert-beta" {
+  zone_id = aws_route53_zone.sec-gov-uk.zone_id
+  name    = "_ae8ab51d93bfe23d219cf6a3071ecd92.www.security.gov.uk."
+  type    = "CNAME"
+  ttl     = local.extra_low_ttl
+
+  records = [
+    "_aacff1a68823ff2fe94689cd78fc2fa8.mhbtsbpdnt.acm-validations.aws."
+  ]
+}
+
 resource "aws_route53_record" "security_txt-prod" {
   zone_id = aws_route53_zone.sec-gov-uk.zone_id
   name    = "_security"
