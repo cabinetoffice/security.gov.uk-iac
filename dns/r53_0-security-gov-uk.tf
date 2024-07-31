@@ -17,7 +17,7 @@ resource "aws_route53_record" "a-prod" {
   type    = "A"
 
   alias {
-    name                   = "d1olglap7yrqp9.cloudfront.net."
+    name                   = "dva8rm30cjiak.cloudfront.net."
     zone_id                = "Z2FDTNDATAQYW2"
     evaluate_target_health = false
   }
@@ -29,7 +29,7 @@ resource "aws_route53_record" "www-a-prod" {
   type    = "A"
 
   alias {
-    name                   = "d1olglap7yrqp9.cloudfront.net."
+    name                   = "dva8rm30cjiak.cloudfront.net."
     zone_id                = "Z2FDTNDATAQYW2"
     evaluate_target_health = false
   }
@@ -41,7 +41,7 @@ resource "aws_route53_record" "aaaa-prod" {
   type    = "AAAA"
 
   alias {
-    name                   = "d1olglap7yrqp9.cloudfront.net."
+    name                   = "dva8rm30cjiak.cloudfront.net."
     zone_id                = "Z2FDTNDATAQYW2"
     evaluate_target_health = false
   }
@@ -53,7 +53,7 @@ resource "aws_route53_record" "www-aaaa-prod" {
   type    = "AAAA"
 
   alias {
-    name                   = "d1olglap7yrqp9.cloudfront.net."
+    name                   = "dva8rm30cjiak.cloudfront.net."
     zone_id                = "Z2FDTNDATAQYW2"
     evaluate_target_health = false
   }
