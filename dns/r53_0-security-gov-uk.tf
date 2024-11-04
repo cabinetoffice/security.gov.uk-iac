@@ -59,6 +59,17 @@ resource "aws_route53_record" "www-aaaa-prod" {
   }
 }
 
+resource "aws_route53_record" "root-digicert" {
+  zone_id = aws_route53_zone.sec-gov-uk.zone_id
+  name    = "_o5eatgutj0yf8tp8b2ifa9vwjdlkgyy.security.gov.uk."
+  type    = "CNAME"
+  ttl     = local.extra_low_ttl
+
+  records = [
+    "dcv.digicert.com."
+  ]
+}
+
 resource "aws_route53_record" "root-acm-cert" {
   zone_id = aws_route53_zone.sec-gov-uk.zone_id
   name    = "_20b0a1cfae94ddd400d956a5289fb7d4"
