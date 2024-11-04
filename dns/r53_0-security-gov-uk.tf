@@ -61,7 +61,7 @@ resource "aws_route53_record" "www-aaaa-prod" {
 
 resource "aws_route53_record" "root-digicert" {
   zone_id = aws_route53_zone.sec-gov-uk.zone_id
-  name    = "_o5eatgutj0yf8tp8b2ifa9vwjdlkgyy.security.gov.uk."
+  name    = "_ldkg6g77ndrtxe76u7fl11r1t1u6jms.security.gov.uk."
   type    = "CNAME"
   ttl     = local.extra_low_ttl
 
