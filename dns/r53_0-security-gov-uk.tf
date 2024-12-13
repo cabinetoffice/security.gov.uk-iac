@@ -126,6 +126,17 @@ resource "aws_route53_record" "security_txt-prod" {
   ]
 }
 
+resource "aws_route53_record" "bimi-prod" {
+  zone_id = aws_route53_zone.sec-gov-uk.zone_id
+  name    = "default._bimi"
+  type    = "TXT"
+  ttl     = local.standard_ttl
+
+  records = [
+    "v=BIMI1;l=https://bimi.service.security.gov.uk/cabinet_office_1021062220.svg;a=https://bimi.service.security.gov.uk/cabinet_office_1021062220.pem",
+  ]
+}
+
 resource "aws_route53_record" "myncsc-prod" {
   zone_id = aws_route53_zone.sec-gov-uk.zone_id
   name    = "_asvdns-b216d260-ad66-4361-b03a-5e4d33030e96"
