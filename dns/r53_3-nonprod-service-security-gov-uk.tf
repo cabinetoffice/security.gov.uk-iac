@@ -1,3 +1,18 @@
+resource "aws_route53_record" "bimi-nonprod-delegated-zone" {
+  zone_id         = aws_route53_zone.sec-gov-uk.zone_id
+  allow_overwrite = true
+  name            = "bimi.nonprod-service"
+  ttl             = local.standard_ttl
+  type            = "NS"
+
+  records = [
+    "ns-435.awsdns-54.com.",
+    "ns-1278.awsdns-31.org.",
+    "ns-1613.awsdns-09.co.uk.",
+    "ns-963.awsdns-56.net.",
+  ]
+}
+
 resource "aws_route53_record" "vuln-report-nonprod-delegated-zone" {
   zone_id         = aws_route53_zone.sec-gov-uk.zone_id
   allow_overwrite = true
