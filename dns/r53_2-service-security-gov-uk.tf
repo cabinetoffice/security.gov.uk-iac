@@ -1,3 +1,18 @@
+resource "aws_route53_record" "bimi-delegated-zone" {
+  zone_id         = aws_route53_zone.sec-gov-uk.zone_id
+  allow_overwrite = true
+  name            = "bimi.service"
+  ttl             = local.standard_ttl
+  type            = "NS"
+
+  records = [
+    "ns-1605.awsdns-08.co.uk.",
+    "ns-1032.awsdns-01.org.",
+    "ns-658.awsdns-18.net.",
+    "ns-470.awsdns-58.com.",
+  ]
+}
+
 resource "aws_route53_record" "vuln-report-delegated-zone" {
   zone_id         = aws_route53_zone.sec-gov-uk.zone_id
   allow_overwrite = true
