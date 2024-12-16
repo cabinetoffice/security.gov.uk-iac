@@ -1,3 +1,18 @@
+resource "aws_route53_record" "email-echo-delegated-zone" {
+  zone_id         = aws_route53_zone.sec-gov-uk.zone_id
+  allow_overwrite = true
+  name            = "email-echo.service"
+  ttl             = local.standard_ttl
+  type            = "NS"
+
+  records = [
+    "ns-183.awsdns-22.com.",
+    "ns-1337.awsdns-39.org.",
+    "ns-960.awsdns-56.net.",
+    "ns-1927.awsdns-48.co.uk.",
+  ]
+}
+
 resource "aws_route53_record" "bimi-delegated-zone" {
   zone_id         = aws_route53_zone.sec-gov-uk.zone_id
   allow_overwrite = true
