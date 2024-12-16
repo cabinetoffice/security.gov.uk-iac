@@ -1,3 +1,18 @@
+resource "aws_route53_record" "emailecho-nonprod-delegated-zone" {
+  zone_id         = aws_route53_zone.sec-gov-uk.zone_id
+  allow_overwrite = true
+  name            = "email-echo.nonprod-service"
+  ttl             = local.standard_ttl
+  type            = "NS"
+
+  records = [
+    "ns-889.awsdns-47.net.",
+    "ns-1112.awsdns-11.org.",
+    "ns-1619.awsdns-10.co.uk.",
+    "ns-173.awsdns-21.com.",
+  ]
+}
+
 resource "aws_route53_record" "bimi-nonprod-delegated-zone" {
   zone_id         = aws_route53_zone.sec-gov-uk.zone_id
   allow_overwrite = true
