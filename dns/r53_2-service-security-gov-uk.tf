@@ -13,6 +13,18 @@ resource "aws_route53_record" "email-echo-delegated-zone" {
   ]
 }
 
+resource "aws_route53_record" "email-echo-prod-ds" {
+  zone_id         = aws_route53_zone.sec-gov-uk.zone_id
+  allow_overwrite = true
+  name            = "email-echo.service"
+  ttl             = local.standard_ttl
+  type            = "DS"
+
+  records = [
+    "65372 13 2 7B850E34D3A8E6BBEF4DA36A489AC3DEA6A386FC43EE353AF9E0D149AF7D9550"
+  ]
+}
+
 resource "aws_route53_record" "bimi-delegated-zone" {
   zone_id         = aws_route53_zone.sec-gov-uk.zone_id
   allow_overwrite = true
@@ -25,6 +37,18 @@ resource "aws_route53_record" "bimi-delegated-zone" {
     "ns-1032.awsdns-01.org.",
     "ns-658.awsdns-18.net.",
     "ns-470.awsdns-58.com.",
+  ]
+}
+
+resource "aws_route53_record" "bimi-prod-ds" {
+  zone_id         = aws_route53_zone.sec-gov-uk.zone_id
+  allow_overwrite = true
+  name            = "bimi.service"
+  ttl             = local.standard_ttl
+  type            = "DS"
+
+  records = [
+    "43783 13 2 494910309BB5F7EA8236E63189944EE89AB67448A28E4BE6B07CB3DD4E594DC4"
   ]
 }
 
