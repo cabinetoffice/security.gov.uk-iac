@@ -102,10 +102,10 @@ resource "aws_route53_record" "sso-delegated-zone" {
   type            = "NS"
 
   records = [
-    "ns-1503.awsdns-59.org.",
-    "ns-380.awsdns-47.com.",
-    "ns-1778.awsdns-30.co.uk.",
-    "ns-958.awsdns-55.net.",
+    "ns-1246.awsdns-27.org.",
+    "ns-124.awsdns-15.com.",
+    "ns-932.awsdns-52.net.",
+    "ns-1747.awsdns-26.co.uk.",
   ]
 }
 
