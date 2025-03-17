@@ -84,14 +84,3 @@ resource "aws_route53_record" "webcaf-nonprod-delegated-zone" {
     "ns-220.awsdns-27.com."
   ]
 }
-
-resource "aws_route53_record" "gccc-cname-nonprod" {
-  zone_id = aws_route53_zone.sec-gov-uk.zone_id
-  name    = "gccc.nonprod-service"
-  type    = "CNAME"
-  ttl     = local.extra_low_ttl
-
-  records = [
-    "gccc.zendesk.com"
-  ]
-}
