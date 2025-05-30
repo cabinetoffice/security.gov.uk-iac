@@ -167,3 +167,20 @@ resource "aws_route53_record" "webcaf-ds" {
     "29233 13 2 AED8C8671A3829923964BC4CD956CD4641963B768504F13C082D0A34586764F3"
   ]
 }
+
+# -------------
+
+resource "aws_route53_record" "opencti-delegated-zone" {
+  zone_id         = aws_route53_zone.sec-gov-uk.zone_id
+  allow_overwrite = true
+  name            = "opencti.service"
+  ttl             = local.standard_ttl
+  type            = "NS"
+
+  records = [
+    "ns-452.awsdns-56.com.",
+    "ns-1499.awsdns-59.org.",
+    "ns-1742.awsdns-25.co.uk.",
+    "ns-854.awsdns-42.net."
+  ]
+}

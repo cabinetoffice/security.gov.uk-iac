@@ -84,3 +84,18 @@ resource "aws_route53_record" "webcaf-nonprod-delegated-zone" {
     "ns-220.awsdns-27.com."
   ]
 }
+
+resource "aws_route53_record" "opencti-nonprod-delegated-zone" {
+  zone_id         = aws_route53_zone.sec-gov-uk.zone_id
+  allow_overwrite = true
+  name            = "opencti.nonprod-service"
+  ttl             = local.standard_ttl
+  type            = "NS"
+
+  records = [
+    "ns-1151.awsdns-15.org.",
+    "ns-115.awsdns-14.com.",
+    "ns-1633.awsdns-12.co.uk.",
+    "ns-922.awsdns-51.net."
+  ]
+}
