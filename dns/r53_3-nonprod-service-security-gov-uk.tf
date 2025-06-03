@@ -93,9 +93,9 @@ resource "aws_route53_record" "opencti-nonprod-delegated-zone" {
   type            = "NS"
 
   records = [
-    "ns-1151.awsdns-15.org.",
-    "ns-115.awsdns-14.com.",
-    "ns-1633.awsdns-12.co.uk.",
-    "ns-922.awsdns-51.net."
+    "ns-1198.awsdns-21.org.",
+    "ns-603.awsdns-11.net.",
+    "ns-28.awsdns-03.com.",
+    "ns-1782.awsdns-30.co.uk."
   ]
 }

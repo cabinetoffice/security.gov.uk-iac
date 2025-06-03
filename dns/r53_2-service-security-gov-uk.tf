@@ -178,9 +178,9 @@ resource "aws_route53_record" "opencti-delegated-zone" {
   type            = "NS"
 
   records = [
-    "ns-452.awsdns-56.com.",
-    "ns-1499.awsdns-59.org.",
-    "ns-1742.awsdns-25.co.uk.",
-    "ns-854.awsdns-42.net."
+    "ns-1625.awsdns-11.co.uk.",
+    "ns-441.awsdns-55.com.",
+    "ns-1187.awsdns-20.org.",
+    "ns-552.awsdns-05.net."
   ]
 }
